@@ -22,7 +22,15 @@ shadow_boundary_tests:
     max: 1
     when:
       - runner_system_failure
-      - stuck_or_timeout_failure
+      - runner_configuration_error
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - stuck_pending_with_matching_runners
+      - stuck_pending_no_matching_runners
+      - no_updates_running
+      - no_updates_canceling
+      - server_timeout_running
+      - server_timeout_canceling
   script:
     - python -m unittest discover -s tests -p "test_*.py"
     - python -m compileall -q custom_components tests
@@ -48,4 +56,12 @@ hacs_github_release:
     max: 1
     when:
       - runner_system_failure
-      - stuck_or_timeout_failure
+      - runner_configuration_error
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - stuck_pending_with_matching_runners
+      - stuck_pending_no_matching_runners
+      - no_updates_running
+      - no_updates_canceling
+      - server_timeout_running
+      - server_timeout_canceling
