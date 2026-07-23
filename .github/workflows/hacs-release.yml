@@ -1,0 +1,97 @@
+name: HACS Shadow-only release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Verify and publish Shadow-only pre-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out mirrored tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify package version and release boundary
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          VERSION="${TAG#v}"
+          test "$TAG" != "$VERSION"
+          case "$VERSION" in
+            *-alpha.*|*-beta.*|*-rc.*) ;;
+            *) echo "Expected an explicit pre-release version, got $VERSION" >&2; exit 1 ;;
+          esac
+          python - "$VERSION" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          version = sys.argv[1]
+          manifest_path = pathlib.Path("custom_components/benni_core_contracts/manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          if manifest.get("version") != version:
+              raise SystemExit(
+                  f"manifest version {manifest.get('version')!r} does not match {version!r}"
+              )
+          if manifest.get("domain") != "benni_core_contracts":
+              raise SystemExit("unexpected Home Assistant domain")
+          if "shadow_only" not in pathlib.Path("README.md").read_text(encoding="utf-8"):
+              raise SystemExit("README does not document shadow_only")
+          if pathlib.Path("custom_components/benni_core_contracts/sensor.py").exists():
+              raise SystemExit("sensor entity platform must not exist")
+          if pathlib.Path("custom_components/benni_core_contracts/binary_sensor.py").exists():
+              raise SystemExit("binary_sensor entity platform must not exist")
+          for path in pathlib.Path("custom_components/benni_core_contracts").glob("*.py"):
+              source = path.read_text(encoding="utf-8")
+              if "async_add_entities" in source or "hass.services" in source:
+                  raise SystemExit(f"read-only boundary failed in {path}")
+          print(f"verified shadow-only package {version}")
+          PY
+
+      - name: Create or verify GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          VERSION="${TAG#v}"
+          TITLE="Benni Core Contracts ${VERSION} — Shadow-only Alpha"
+          NOTES="docs/release-notes-shadow-${VERSION}.md"
+          test -f "$NOTES"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes-file "$NOTES" \
+              --prerelease
+          else
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes-file "$NOTES" \
+              --prerelease \
+              --verify-tag
+          fi
+
+      - name: Verify GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          VERSION="${TAG#v}"
+          gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
+            --jq 'select(.draft == false and .prerelease == true) | .tag_name' \
+            | grep -Fx "$TAG"
+          gh api "repos/${GITHUB_REPOSITORY}/contents/custom_components/benni_core_contracts/manifest.json?ref=${TAG}" \
+            --jq '.content' \
+            | base64 -d \
+            | python -c 'import json,sys; assert json.load(sys.stdin)["version"] == sys.argv[1]' "$VERSION"

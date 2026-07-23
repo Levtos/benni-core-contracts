@@ -7,7 +7,7 @@ CONFIG_SCHEMA_VERSION = 1
 STORAGE_SCHEMA_VERSION = 2
 GATE_PACK_VERSION = 1
 WEBSOCKET_PAYLOAD_VERSION = 1
-RELEASE_VERSION = "0.1.0b1"
+RELEASE_VERSION = "0.1.0-alpha.1"
 RELEASE_CHANNEL = "shadow_only"
 
 # The only selectable/activatable mode in this release candidate.  A missing

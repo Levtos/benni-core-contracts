@@ -1,0 +1,8 @@
+include:
+  - project: "ha-platform/control"
+    ref: main
+    file: "/ci/hacs-github-release.gitlab-ci.yml"
+
+variables:
+  HACS_GITHUB_REPOSITORY: "Levtos/benni-core-contracts"
+  HACS_MANIFEST_PATH: "custom_components/benni_core_contracts/manifest.json"

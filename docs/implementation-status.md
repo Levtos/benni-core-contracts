@@ -1,10 +1,10 @@
 # Implementierungsstatus – control#57
 
-Stand: 2026-07-23, Benni Shadow-Only Release Candidate v1,
-lokaler, uncommitted Shadow-Slice.
+Stand: 2026-07-23, Benni Shadow-only Alpha `0.1.0-alpha.1`,
+Release-Gate in Vorbereitung.
 
-Arbeitsstand bleibt uncommitted; es gab keinen Release-, Deployment- oder
-Consumer-Schritt. Die im vorherigen Source-Binding-Gate dokumentierten
+Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
+vorherigen Source-Binding-Gate dokumentierten
 read-only HA-State-/Domain-Snapshots bleiben historische Evidence. Die
 aktuelle Probe erreichte das Einhornzentrale-Frontend, aber die read-only
 State-API antwortete ohne bereitgestellte Authentifizierung mit HTTP 401.
@@ -26,10 +26,10 @@ Neu im Repository `core-contracts`:
   `docs/source-binding-matrix-v1.md`, `docs/benni-owner-required-field-gate-v1.md`,
   `docs/benni-shadow-contract-verification-v1.md`,
   `docs/benni-live-evidence-acquisition-v1.md`,
-  `docs/benni-shadow-only-release-v1.md`,
+  `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
-  `docs/release-notes-shadow-0.1.0b1.md`, `docs/ux-contract.md` und dieses
-  Dokument.
+  `docs/release-notes-shadow-0.1.0-alpha.1.md`, `docs/ux-contract.md`,
+  `.gitlab-ci.yml`, `.github/workflows/hacs-release.yml` und dieses Dokument.
 - Architektur- und Regeltests unter `tests/`, einschließlich der fachlichen
   Fixture-Daten in `tests/fixtures.py` und
   `tests/source_binding_fixtures.py`.
@@ -235,7 +235,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.1.0b1`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.1.0-alpha.1`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` und `published` werden nicht als Default oder
@@ -252,12 +252,13 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 - Der Listener bleibt read-only und verarbeitet nur explizit konfigurierte
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
-- `manifest.json`, `pyproject.toml` und HACS-Metadaten sind lokal geprüft.
-  `zip_release=false` dokumentiert, dass noch kein Release-Artefakt
-  bereitgestellt wird; ein HACS-Install ist mit diesem lokalen Stand nicht
-  möglich.
-- Eine spätere Installation darf nur auf Benni/Einhornzentrale und nach
-  separater Freigabe erfolgen. Sie wurde in diesem Gate nicht ausgeführt.
+- `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
+  `0.1.0-alpha.1`. `zip_release=false` lässt HACS den synchronisierten
+  Repository-Stand verwenden. `.gitlab-ci.yml` bindet das zentrale
+  Mirror-Gate; `.github/workflows/hacs-release.yml` erstellt und prüft den
+  GitHub-Pre-Release.
+- Eine Installation darf nur auf Benni/Einhornzentrale und nach separater
+  read-only Freigabe erfolgen. Codex führt keine Live-Installation aus.
 
 ## Shadow-Only Release-Candidate-Prüfung
 
@@ -274,7 +275,7 @@ Ran 122 tests ... OK
 ```
 
 Live-Evidence bleibt wegen HTTP 401 des autorisierten State-API-Zugriffs
-offen; ein Release oder HACS-Install wurde nicht durchgeführt.
+offen; der Paket-Pre-Release schließt dieses Gate nicht.
 
 ## HA-Entities
 
@@ -313,7 +314,9 @@ Lücke: Restore, retained MQTT, Gerätezeit und HA-Zeit werden nicht vermischt.
 ## Repository publication
 
 Das Repository ist als privates GitLab-Projekt unter
-`ha-platform/core-contracts` angelegt. Der initiale Shadow-Slice liegt im
-Commit `bbe9dd96cefa5dd0203f16090dec65a131534b5c` auf `main`. Diese
-Publikation ändert weder Home Assistant, Registry, Deployment, Release noch
-Consumer; die fachlichen und Live-Gates bleiben offen.
+`ha-platform/core-contracts` angelegt. Der synchronisierte `main`-Stand vor
+diesem Release-Gate ist `b8074e73c8bf6d144efef6835586750d92d8d273`; der
+GitHub-Mirror ist `Levtos/benni-core-contracts`. Der Release-Tag wird erst
+nach grüner lokaler Suite auf den Release-Commit gesetzt. Diese Publikation
+ändert weder Home Assistant, Registry, Deployment noch Consumer; die
+fachlichen und Live-Gates bleiben offen.

@@ -1,18 +1,18 @@
 # Geplante Benni-Installation: Shadow-only v1
 
-Diese Anleitung beschreibt nur die Voraussetzungen und den kontrollierten
-Ablauf für eine spätere, ausdrücklich freigegebene read-only Installation.
-Sie wurde im aktuellen Gate nicht ausgeführt. Es gab keinen Remote-Release,
-keinen HACS-Install, keine ConfigEntry-Aktivierung und keinen Zugriff mit
-Token oder Cookie.
+Diese Anleitung beschreibt die Voraussetzungen und den kontrollierten Ablauf
+für die ausdrücklich read-only Shadow-Installation der Alpha `0.1.0-alpha.1`.
+Der Release ist über den öffentlichen GitHub-Mirror als HACS-Quelle
+installierbar. Die Installation wurde von Codex nicht auf Home Assistant
+ausgeführt; sie aktiviert weder ConfigEntry noch SourceBindings automatisch.
 
 ## Vorbedingungen
 
 Vor einer Installation müssen alle folgenden Punkte separat bestätigt sein:
 
-1. Ein freigegebener Remote-/Paketstand von `benni_core_contracts` mit der
-   dokumentierten Shadow-RC-Version `0.1.0b1` liegt vor. Der aktuelle lokale
-   Stand ist nicht über HACS installierbar.
+1. Der HACS-Eintrag `Levtos/benni-core-contracts` und der Tag
+   `v0.1.0-alpha.1` zeigen auf denselben geprüften Commit. HACS muss
+   benutzerseitig auf diesen Pre-Release-Tag oder den Repository-Stand zeigen.
 2. Die Installation erfolgt ausschließlich auf Benni/Einhornzentrale. Das
    Elternprofil bleibt `parent_future` und wird nicht installiert oder
    aktiviert.
@@ -65,7 +65,7 @@ produktiver Published-Modus aus diesem Test entstehen. Die Deaktivierung und
 Entfernung gehören zu einem separaten, ausdrücklich freigegebenen Live-
 Schritt; sie wurden hier nicht ausgeführt.
 
-## Aktuelle Blocker
+## Aktuelle Evidence-Gates
 
 - Der direkte State-API-Zugriff auf Einhornzentrale liefert ohne
   Authentifizierung HTTP 401.
@@ -73,5 +73,6 @@ Schritt; sie wurden hier nicht ausgeführt.
   `lock.flur_aqara_smart_lock_u200` fehlt.
 - Gerätezeitstempel, nicht-retained State-Change-Evidence und Ownership sind
   für die produktiven Kandidaten noch nicht belegt.
-- Das Repository ist nicht remote veröffentlicht; HACS kann diesen lokalen
-  Arbeitsstand nicht installieren.
+- Die Installation liefert noch keine Live-Evidence-Freigabe. Source-Owner,
+  Gerätezeitstempel, nicht-retained State-Change-Evidence und Lock-
+  Revalidierung bleiben vor dem nächsten Benni-Shadow-Schritt offen.

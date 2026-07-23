@@ -59,11 +59,46 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertIn("b1", RELEASE_VERSION)
+        self.assertEqual(RELEASE_VERSION, "0.1.0-alpha.1")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
         self.assertEqual(RELEASE_CHANNEL, MODE_SHADOW_ONLY)
+
+    def test_release_documents_and_ci_are_version_consistent(self) -> None:
+        release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
+        release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.0-alpha.1.md").read_text(
+            encoding="utf-8"
+        )
+        gitlab_ci = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
+        github_workflow = (ROOT / ".github" / "workflows" / "hacs-release.yml").read_text(
+            encoding="utf-8"
+        )
+        for document in (release_doc, release_notes):
+            self.assertIn(RELEASE_VERSION, document)
+            self.assertIn("shadow-only", document.lower())
+            self.assertIn("0 HA-Entities", document)
+            self.assertIn("parent_future", document)
+        self.assertIn('HACS_GITHUB_REPOSITORY: "Levtos/benni-core-contracts"', gitlab_ci)
+        self.assertIn("ha-platform/control", gitlab_ci)
+        self.assertIn("--prerelease", github_workflow)
+        self.assertIn("custom_components/benni_core_contracts/manifest.json", github_workflow)
+
+    def test_repository_contains_no_secret_material(self) -> None:
+        secret_patterns = (
+            re.compile(r"\bglpat-[A-Za-z0-9_-]{12,}\b"),
+            re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
+            re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
+        )
+        for path in ROOT.rglob("*"):
+            if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+                continue
+            try:
+                source = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            for pattern in secret_patterns:
+                self.assertIsNone(pattern.search(source), str(path))
 
     def test_missing_mode_never_defaults_to_shadow_only(self) -> None:
         with self.assertRaises(ValueError):
