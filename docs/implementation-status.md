@@ -1,6 +1,6 @@
 # Implementierungsstatus – control#57
 
-Stand: 2026-07-23, Benni Shadow-only Alpha `0.1.0-alpha.1`,
+Stand: 2026-07-24, Benni Shadow-only Alpha `0.1.0-alpha.2`,
 Release-Gate in Vorbereitung.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
@@ -235,7 +235,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.1.0-alpha.1`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.1.0-alpha.2`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` und `published` werden nicht als Default oder
@@ -253,7 +253,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.1.0-alpha.1`. `zip_release=false` lässt HACS den synchronisierten
+  `0.1.0-alpha.2`. `zip_release=false` lässt HACS den synchronisierten
   Repository-Stand verwenden. `.gitlab-ci.yml` bindet das zentrale
   Mirror-Gate und führt die stdlib-only Boundary-Suite vor dem Releasejob aus;
   `.github/workflows/hacs-release.yml` erstellt und prüft den GitHub-

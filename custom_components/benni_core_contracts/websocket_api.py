@@ -71,15 +71,17 @@ async def async_register_websocket_api(hass: Any, runtime: ShadowRuntime) -> Non
         return
 
     def register(command: str) -> None:
-        schema = vol.Schema(
-            {
-                vol.Required("id"): int,
-                vol.Required("type"): command,
-                vol.Optional("contract_id"): str,
-                vol.Optional("entry_id"): str,
-                vol.Optional("since_revision"): int,
-            }
-        )
+        # Home Assistant's websocket_command decorator accepts a raw
+        # voluptuous mapping (or vol.All with a mapping as its first
+        # validator). A vol.Schema instance is not accepted by current HA:
+        # the decorator reads the command from ``schema.validators[0]``.
+        schema = {
+            vol.Required("id"): int,
+            vol.Required("type"): command,
+            vol.Optional("contract_id"): str,
+            vol.Optional("entry_id"): str,
+            vol.Optional("since_revision"): int,
+        }
 
         @websocket_api.websocket_command(schema)
         @websocket_api.async_response
