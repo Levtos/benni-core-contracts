@@ -309,3 +309,11 @@ Note 489 wird nicht durch eine Migration beantwortet; das neue Repository
 bleibt unabhängig von Core Devices und lässt den bestehenden Legacy-/Consumer-
 Bestand unangetastet. Die Freshness-Unterscheidung folgt der dort belegten
 Lücke: Restore, retained MQTT, Gerätezeit und HA-Zeit werden nicht vermischt.
+
+## Repository publication
+
+Das Repository ist als privates GitLab-Projekt unter
+`ha-platform/core-contracts` angelegt. Der initiale Shadow-Slice liegt im
+Commit `bbe9dd96cefa5dd0203f16090dec65a131534b5c` auf `main`. Diese
+Publikation ändert weder Home Assistant, Registry, Deployment, Release noch
+Consumer; die fachlichen und Live-Gates bleiben offen.
