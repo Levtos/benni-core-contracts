@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+import sys
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from custom_components.benni_core_contracts.contracts import default_schema_registry
 from custom_components.benni_core_contracts.models import ConfigModel, RuntimeMode
@@ -101,6 +105,70 @@ class ContractAndBoundaryTests(unittest.TestCase):
             self.assertEqual(payload["payload_version"], 1)
             self.assertEqual(payload["command"], command)
             self.assertIn("revision", payload)
+
+    def test_websocket_registration_uses_home_assistant_mapping_schema(self) -> None:
+        """The HA decorator must receive a mapping, not vol.Schema."""
+
+        from custom_components.benni_core_contracts.websocket_api import (
+            async_register_websocket_api,
+        )
+
+        registered_schemas = []
+        registered_handlers = []
+
+        websocket_api = types.ModuleType("homeassistant.components.websocket_api")
+
+        def websocket_command(schema):
+            self.assertIsInstance(schema, dict)
+            self.assertIn("type", schema)
+            registered_schemas.append(schema)
+
+            def decorate(handler):
+                return handler
+
+            return decorate
+
+        def async_response(handler):
+            return handler
+
+        def async_register_command(_hass, handler):
+            registered_handlers.append(handler)
+
+        websocket_api.websocket_command = websocket_command
+        websocket_api.async_response = async_response
+        websocket_api.async_register_command = async_register_command
+
+        homeassistant = types.ModuleType("homeassistant")
+        components = types.ModuleType("homeassistant.components")
+        components.websocket_api = websocket_api
+        homeassistant.components = components
+
+        runtime = ShadowRuntime(
+            ConfigModel(mode=RuntimeMode.SHADOW_ONLY),
+            SignalGraph(),
+        )
+        hass = types.SimpleNamespace(data={})
+        with patch.dict(
+            sys.modules,
+            {
+                "homeassistant": homeassistant,
+                "homeassistant.components": components,
+                "homeassistant.components.websocket_api": websocket_api,
+            },
+        ):
+            asyncio.run(async_register_websocket_api(hass, runtime))
+
+        self.assertEqual(
+            [schema["type"] for schema in registered_schemas],
+            [
+                WS_LIST_CONTRACTS,
+                WS_GET_CONTRACT,
+                WS_GET_DIAGNOSTICS,
+                WS_GET_GRAPH,
+                WS_GET_HEALTH,
+            ],
+        )
+        self.assertEqual(len(registered_handlers), 5)
 
     def test_no_entity_platform_or_actuator_surface_exists_in_first_slice(self) -> None:
         self.assertFalse((PACKAGE / "sensor.py").exists())
