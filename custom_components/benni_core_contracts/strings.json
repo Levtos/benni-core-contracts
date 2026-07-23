@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Core Contracts",
+        "description": "Install the Benni read-only shadow_only release candidate.",
+        "data": {
+          "profile": "Profile",
+          "mode": "Mode (must be shadow_only)"
+        }
+      }
+    }
+  }
+}

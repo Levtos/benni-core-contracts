@@ -1,0 +1,14 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Core Contracts",
+        "description": "Der Benni-Release-Kandidat läuft ausschließlich read-only im Modus shadow_only.",
+        "data": {
+          "profile": "Profil",
+          "mode": "Modus (muss shadow_only sein)"
+        }
+      }
+    }
+  }
+}
