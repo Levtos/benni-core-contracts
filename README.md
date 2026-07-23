@@ -1,7 +1,7 @@
-# Benni Core Contracts — Shadow RC `0.1.0b1`
+# Benni Core Contracts — Shadow-only Alpha `0.1.0-alpha.1`
 
 `benni_core_contracts` is a new Home Assistant foundation integration built
-around an internal signal graph. This local release candidate is deliberately
+around an internal signal graph. This installable pre-release is deliberately
 `shadow_only`: it can read explicitly configured source states, evaluate
 versioned internal contracts, and expose diagnostics through a read-only
 WebSocket foundation. It does not create Home Assistant entities, call
@@ -14,10 +14,12 @@ an empty set.
 
 ## Status
 
-This repository is a local, not-yet-released implementation for
-`ha-platform/control#57`. The package metadata identifies a pre-release Shadow
-RC; it is not currently installable from HACS. No Home Assistant instance,
-registry, release, or deployment was changed.
+This is the first installable Shadow-only Alpha for `ha-platform/control#57`.
+The GitLab source is `ha-platform/core-contracts` and the public HACS mirror is
+`Levtos/benni-core-contracts`; the release tag is `v0.1.0-alpha.1`. Installation
+is a package distribution step only: it does not activate a ConfigEntry, create
+entities, alter a registry, or constitute live approval. No Home Assistant
+instance was changed.
 
 See [the architecture](docs/architecture.md), the
 [Gate Pack v1](docs/gate-pack-v1.md), the
@@ -31,12 +33,12 @@ and the
 as well as the
 [implementation status](docs/implementation-status.md).
 
-The Shadow-RC scope and boundaries are in
+The Shadow-only release scope and boundaries are in
 [Benni Shadow-Only Release Candidate v1](docs/benni-shadow-only-release-v1.md).
-The planned, separately approved installation procedure is in
-[installation-shadow-only.md](docs/installation-shadow-only.md); it was not
-executed here. Release notes are in
-[release-notes-shadow-0.1.0b1.md](docs/release-notes-shadow-0.1.0b1.md).
+The separate installation procedure is in
+[installation-shadow-only.md](docs/installation-shadow-only.md). Release
+details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
+notes are in [release-notes-shadow-0.1.0-alpha.1.md](docs/release-notes-shadow-0.1.0-alpha.1.md).
 
 The Source Binding Evidence Gate contains only versioned, read-only evidence
 records. It does not populate the ConfigEntry or activate any binding.
@@ -51,6 +53,11 @@ keeps every source OPEN when state API authentication or ownership evidence is
 missing. The ConfigEntry requires `profile=benni` and an explicit
 `mode=shadow_only`; there is no implicit mode default, no parent activation,
 and no public entity allowlist in this RC.
+
+The release is not a production Contract publication. Benni is the only
+permitted Shadow profile; Eltern remains `parent_future`/`out_of_scope`.
+Room Climate, Opening, Weather/Environment and Technical Device results remain
+internal and diagnostic. Lock and Cover position remain evidence-only.
 
 ## Local verification
 

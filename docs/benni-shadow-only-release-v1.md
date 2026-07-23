@@ -1,7 +1,7 @@
 # Benni Shadow-Only Release Candidate v1
 
-Stand: 2026-07-23. Dieser lokale Release-Kandidat trägt die Version
-`0.1.0b1`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
+Stand: 2026-07-23. Dieser installierbare Shadow-only-Alpha trägt die Version
+`0.1.0-alpha.1`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
 Runtime-Modus `shadow_only`.
 
 ## Zweck
@@ -68,16 +68,17 @@ Zustände gespeichert.
 
 ## Paket- und HACS-Status
 
-Manifest, `pyproject.toml` und die Shadow-RC-Dokumentation verwenden
-`0.1.0b1`. `hacs.json` beschreibt das Paket, aktiviert aber absichtlich kein
-Release-Zip (`zip_release=false`). Das Repository ist lokal und noch nicht
-remote veröffentlicht; eine HACS-Installation ist daher noch nicht möglich.
+Manifest, `pyproject.toml` und die Shadow-Alpha-Dokumentation verwenden
+`0.1.0-alpha.1`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
+kein Release-Zip (`zip_release=false`); HACS verwendet den öffentlichen
+GitHub-Mirror als Installationsquelle. GitLab-Quelle, GitHub-Mirror, Tag und
+Pre-Release müssen auf denselben Commit zeigen.
 
-Für eine spätere, separat freizugebende Installation müssen mindestens ein
-freigegebener Remote-Stand/Release, eine geprüfte HACS-/manuelle
-Installationsquelle, autorisierter read-only HA-Zugriff und ein definierter
-Snapshot-/Deinstallationsablauf vorliegen. Diese Voraussetzungen wurden in
-diesem Gate nicht hergestellt.
+Die Alpha ist installierbar, aber nicht automatisch aktiviert. Für eine
+separat freizugebende Shadow-Installation auf Benni müssen zusätzlich ein
+autorisierter read-only HA-Zugriff und ein definierter Snapshot-/Deinstallations-
+ablauf vorliegen. Die Installation selbst ist keine Live-Freigabe und ersetzt
+keine Evidence-Prüfung.
 
 ## Prüfstatus
 

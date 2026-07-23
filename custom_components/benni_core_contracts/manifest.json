@@ -1,7 +1,7 @@
 {
   "domain": "benni_core_contracts",
   "name": "Benni Core Contracts",
-  "version": "0.1.0b1",
+  "version": "0.1.0-alpha.1",
   "documentation": "https://gitlab.b-struck.de/ha-platform/core-contracts",
   "issue_tracker": "https://gitlab.b-struck.de/ha-platform/control/-/issues/57",
   "codeowners": ["@codex-agent"],
