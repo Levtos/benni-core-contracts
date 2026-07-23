@@ -1,4 +1,4 @@
-# Benni Core Contracts — Shadow-only Alpha `0.1.0-alpha.1`
+# Benni Core Contracts — Shadow-only Alpha `0.1.0-alpha.2`
 
 `benni_core_contracts` is a new Home Assistant foundation integration built
 around an internal signal graph. This installable pre-release is deliberately
@@ -16,7 +16,7 @@ an empty set.
 
 This is the first installable Shadow-only Alpha for `ha-platform/control#57`.
 The GitLab source is `ha-platform/core-contracts` and the public HACS mirror is
-`Levtos/benni-core-contracts`; the release tag is `v0.1.0-alpha.1`. Installation
+`Levtos/benni-core-contracts`; the release tag is `v0.1.0-alpha.2`. Installation
 is a package distribution step only: it does not activate a ConfigEntry, create
 entities, alter a registry, or constitute live approval. No Home Assistant
 instance was changed.
@@ -38,7 +38,7 @@ The Shadow-only release scope and boundaries are in
 The separate installation procedure is in
 [installation-shadow-only.md](docs/installation-shadow-only.md). Release
 details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
-notes are in [release-notes-shadow-0.1.0-alpha.1.md](docs/release-notes-shadow-0.1.0-alpha.1.md).
+notes are in [release-notes-shadow-0.1.0-alpha.2.md](docs/release-notes-shadow-0.1.0-alpha.2.md).
 
 The Source Binding Evidence Gate contains only versioned, read-only evidence
 records. It does not populate the ConfigEntry or activate any binding.
