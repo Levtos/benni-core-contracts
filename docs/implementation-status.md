@@ -255,8 +255,9 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
   `0.1.0-alpha.1`. `zip_release=false` lässt HACS den synchronisierten
   Repository-Stand verwenden. `.gitlab-ci.yml` bindet das zentrale
-  Mirror-Gate; `.github/workflows/hacs-release.yml` erstellt und prüft den
-  GitHub-Pre-Release.
+  Mirror-Gate und führt die stdlib-only Boundary-Suite vor dem Releasejob aus;
+  `.github/workflows/hacs-release.yml` erstellt und prüft den GitHub-
+  Pre-Release.
 - Eine Installation darf nur auf Benni/Einhornzentrale und nach separater
   read-only Freigabe erfolgen. Codex führt keine Live-Installation aus.
 
