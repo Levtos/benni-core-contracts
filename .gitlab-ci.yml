@@ -31,6 +31,9 @@ shadow_boundary_tests:
       - no_updates_canceling
       - server_timeout_running
       - server_timeout_canceling
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends git
   script:
     - python -m unittest discover -s tests -p "test_*.py"
     - python -m compileall -q custom_components tests

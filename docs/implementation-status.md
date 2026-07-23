@@ -272,11 +272,16 @@ Aktueller reproduzierbarer Teststand:
 
 ```text
 python -m unittest discover -s tests -p "test_*.py" -v
-Ran 122 tests ... OK
+Ran 124 tests ... OK
 ```
 
 Live-Evidence bleibt wegen HTTP 401 des autorisierten State-API-Zugriffs
 offen; der Paket-Pre-Release schließt dieses Gate nicht.
+
+Die GitLab-CI-Suite verwendet den dedizierten, projektgebundenen Docker-Runner
+`core-contracts-ci` (Runner 2) in LXC 122. Der Runner führt keine ungetaggten
+Jobs aus, ist auf 15 Minuten begrenzt und ist in
+[`ci-runner-core-contracts.md`](ci-runner-core-contracts.md) dokumentiert.
 
 ## HA-Entities
 
