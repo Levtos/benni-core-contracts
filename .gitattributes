@@ -1,0 +1,3 @@
+# Vite's minified Svelte runtime contains intentional whitespace inside a
+# template literal; it is not trailing source whitespace.
+custom_components/benni_core_contracts/frontend/app/index.js -whitespace

@@ -11,6 +11,7 @@ from .profiles import profile_definition
 from .shadow import ShadowRuntime
 from .storage import HomeAssistantStorage, StorageCodec
 from .source_listener import async_attach_source_listeners
+from .view import async_remove_view, async_setup_view
 from .websocket_api import async_register_websocket_api
 
 
@@ -43,6 +44,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = runtime
     await async_register_websocket_api(hass, runtime)
     await async_attach_source_listeners(hass, runtime)
+    await async_setup_view(hass)
+    entry.async_on_unload(lambda: async_remove_view(hass))
     # No HA entity platform is forwarded. Shadow mode is intentionally the only
     # active path in this first slice.
     return True
@@ -53,4 +56,5 @@ async def async_unload_entry(hass: Any, entry: Any) -> bool:
     runtime = runtimes.pop(entry.entry_id, None)
     if runtime is not None:
         runtime.unload()
+    async_remove_view(hass)
     return True

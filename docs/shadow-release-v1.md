@@ -1,12 +1,12 @@
 # Benni Core Contracts — Shadow-only Alpha v1
 
-Stand: 2026-07-24. Release-Version: `0.1.0-alpha.2`.
+Stand: 2026-07-27. Release-Version: `0.2.0-alpha.1`.
 
 ## Release-Identität
 
 - GitLab-Quelle: `ha-platform/core-contracts`
 - GitHub-HACS-Mirror: `Levtos/benni-core-contracts`
-- Git-Tag: `v0.1.0-alpha.2`
+- Git-Tag: `v0.2.0-alpha.1`
 - HA-Domain: `benni_core_contracts`
 - einziger aktivierbarer Modus: `shadow_only`
 - einziges produktives Shadow-Profil: `benni`
@@ -31,15 +31,22 @@ wird nicht aktiviert. Lock und Cover-Position bleiben Evidence-only.
 
 1. HACS muss das Repository `Levtos/benni-core-contracts` als Custom
    Integration verwenden.
-2. Für diese Alpha muss der Tag `v0.1.0-alpha.2` ausgewählt werden.
+2. Für diese Alpha muss der Tag `v0.2.0-alpha.1` ausgewählt werden.
 3. HACS muss die Integration unter `custom_components/benni_core_contracts`
    installieren; `hacs.json` verwendet dafür `content_in_root=false` und
    `zip_release=false`.
-4. Die Installation auf Home Assistant ist ein separat auszuführender,
-   ausdrücklich read-only Benni-Schritt. Codex hat keine Live-Installation,
-   keinen Reload und keine ConfigEntry-Aktivierung durchgeführt.
+4. Die technische Bereitstellung endet bei einer installierbaren HACS-
+   Version. Reload, Neustart und ConfigEntry-Aktivierung bleiben ein
+   ausdrücklich read-only Benni-Schritt.
 
 ## Nach der Installation
+
+Nach dem Laden des expliziten ConfigEntry steht das Sidebar-Panel `Core
+Contracts` zur Verfügung. Es pollt die fünf bestehenden read-only
+WebSocket-Kommandos, zeigt Revision, Contract-/Feld-Health, Quellen,
+Freshness, Safety, Fallback, Root Cause und Consumer-Effekt und führt keine
+Aktion aus. Die fachliche und visuelle Abnahme erfolgt durch Benni in HA auf
+Desktop und Lenovo M11.
 
 Die zuständige Person darf ausschließlich auf Benni/Einhornzentrale einen
 ConfigEntry mit folgenden Werten anlegen:

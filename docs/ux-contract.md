@@ -1,8 +1,8 @@
 # UX-/WebSocket-Anforderungen
 
-Die React/Vite-Oberfläche ist in diesem Slice noch nicht gebaut. Die
-WebSocket-API liefert jedoch bereits die read-only Grundlage, damit die
-spätere UX nicht aus internen Python-Details lesen muss.
+Die Svelte-5-/Vite-Oberfläche ist als statisch gebündeltes Home-Assistant-
+Panel umgesetzt. Sie liest ausschließlich die versionierte read-only
+WebSocket-API, damit die UX nicht aus internen Python-Details lesen muss.
 
 ## Stabilität bei Live-Updates
 
@@ -23,6 +23,12 @@ werden nicht aus Listenpositionen abgeleitet. Die Befehle sind read-only;
 Konfiguration und spätere Allowlist-Änderungen bleiben ein separater,
 validierter ConfigEntry-/UX-Workflow.
 
+Die Produktionsansicht nutzt keine Preview-Fixtures. Eine lokale Vite-
+Vorschau kann ausschließlich mit `?preview=fixture` gestartet werden und wird
+im UI sichtbar als nicht-live markiert. Die installierte HA-Ansicht verwendet
+die aktive HA-Verbindung und speichert weder Tokens noch Zustände in
+LocalStorage oder URL-Parametern.
+
 ## UX-Felder
 
 Die Diagnoseansicht muss Contract-Headline und Feld-Details getrennt zeigen:
@@ -39,3 +45,7 @@ brauchbaren Felder angezeigt werden.
 
 Die vollständige normative Payload-, Freshness- und Fallback-Spezifikation
 steht in [Gate Pack v1](gate-pack-v1.md).
+
+Die technische Trennung von Shell, Design-Tokens, Basiskomponenten,
+Transportadapter und Core-Contracts-Fachmodul ist in
+[ux-implementation.md](ux-implementation.md) dokumentiert.

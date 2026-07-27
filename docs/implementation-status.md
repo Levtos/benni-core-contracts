@@ -1,7 +1,7 @@
 # Implementierungsstatus – control#57
 
-Stand: 2026-07-24, Benni Shadow-only Alpha `0.1.0-alpha.2`,
-Release-Gate in Vorbereitung.
+Stand: 2026-07-27, Benni Shadow-only Alpha `0.2.0-alpha.1`,
+UX-Release-Gate in technischer Bereitstellung.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
 vorherigen Source-Binding-Gate dokumentierten
@@ -29,7 +29,12 @@ Neu im Repository `core-contracts`:
   `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
   `docs/release-notes-shadow-0.1.0-alpha.1.md`, `docs/ux-contract.md`,
-  `.gitlab-ci.yml`, `.github/workflows/hacs-release.yml` und dieses Dokument.
+  `.gitlab-ci.yml`, `.github/workflows/hacs-release.yml`, `docs/ux-implementation.md`,
+  `docs/ux-frontend-standard.md` und dieses Dokument.
+- UX: `frontend/` mit Svelte 5/Vite, Graphite-Dark-Tokenlayer, separater
+  App-Shell/Basiskomponenten-Schicht, Core-Contracts-Transportadapter und
+  vier read-only Ansichten. Das Build-Artefakt liegt unter
+  `custom_components/benni_core_contracts/frontend/app/`.
 - Architektur- und Regeltests unter `tests/`, einschließlich der fachlichen
   Fixture-Daten in `tests/fixtures.py` und
   `tests/source_binding_fixtures.py`.
@@ -136,7 +141,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 - Soll ein späterer Published-Modus nur einzelne Contract-Entities oder
   bewusst aggregierte Projektionen zulassen?
 - Welche WS-Payload-Grenzen und Auth-/Admin-Berechtigungsdetails gelten für
-  spätere Config-Schreibbefehle und die React/Vite-UX?
+  spätere Config-Schreibbefehle und eine künftige Umbrella UX?
 - Welche produktiven SourceBindings lassen sich für die synthetischen
   Contract-Evidence-Fixtures tatsächlich belegen?
 - Wie werden die festgelegten Required-Felder und Safety-Evidence fachlich
@@ -235,7 +240,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.1.0-alpha.2`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.2.0-alpha.1`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` und `published` werden nicht als Default oder
@@ -253,13 +258,14 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.1.0-alpha.2`. `zip_release=false` lässt HACS den synchronisierten
+  `0.2.0-alpha.1`. `zip_release=false` lässt HACS den synchronisierten
   Repository-Stand verwenden. `.gitlab-ci.yml` bindet das zentrale
   Mirror-Gate und führt die stdlib-only Boundary-Suite vor dem Releasejob aus;
   `.github/workflows/hacs-release.yml` erstellt und prüft den GitHub-
   Pre-Release.
 - Eine Installation darf nur auf Benni/Einhornzentrale und nach separater
-  read-only Freigabe erfolgen. Codex führt keine Live-Installation aus.
+  read-only Freigabe erfolgen. Nach technischer Bereitstellung bleibt die
+  Issue-Abnahme auf `testing`, bis Benni die reale UX in HA bestätigt.
 
 ## Shadow-Only Release-Candidate-Prüfung
 

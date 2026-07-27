@@ -1,7 +1,7 @@
 # Benni Shadow-Only Release Candidate v1
 
-Stand: 2026-07-23. Dieser installierbare Shadow-only-Alpha trägt die Version
-`0.1.0-alpha.2`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
+Stand: 2026-07-27. Dieser installierbare Shadow-only-Alpha trägt die Version
+`0.2.0-alpha.1`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
 Runtime-Modus `shadow_only`.
 
 ## Zweck
@@ -69,12 +69,14 @@ Zustände gespeichert.
 ## Paket- und HACS-Status
 
 Manifest, `pyproject.toml` und die Shadow-Alpha-Dokumentation verwenden
-`0.1.0-alpha.2`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
+`0.2.0-alpha.1`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
 kein Release-Zip (`zip_release=false`); HACS verwendet den öffentlichen
 GitHub-Mirror als Installationsquelle. GitLab-Quelle, GitHub-Mirror, Tag und
 Pre-Release müssen auf denselben Commit zeigen.
 
-Die Alpha ist installierbar, aber nicht automatisch aktiviert. Für eine
+Die Alpha enthält zusätzlich das statische, read-only Svelte-Panel für die
+Live-Prüfung der fünf bestehenden WebSocket-Kommandos. Sie ist installierbar,
+aber nicht automatisch aktiviert. Für eine
 separat freizugebende Shadow-Installation auf Benni müssen zusätzlich ein
 autorisierter read-only HA-Zugriff und ein definierter Snapshot-/Deinstallations-
 ablauf vorliegen. Die Installation selbst ist keine Live-Freigabe und ersetzt

@@ -1,4 +1,4 @@
-# Benni Core Contracts — Shadow-only Alpha `0.1.0-alpha.2`
+# Benni Core Contracts — Shadow-only Alpha `0.2.0-alpha.1`
 
 `benni_core_contracts` is a new Home Assistant foundation integration built
 around an internal signal graph. This installable pre-release is deliberately
@@ -14,12 +14,14 @@ an empty set.
 
 ## Status
 
-This is the first installable Shadow-only Alpha for `ha-platform/control#57`.
+This is the installable Shadow-only Alpha with the first live-testable Svelte
+UX for `ha-platform/control#59` (backend foundation: `#57`).
 The GitLab source is `ha-platform/core-contracts` and the public HACS mirror is
-`Levtos/benni-core-contracts`; the release tag is `v0.1.0-alpha.2`. Installation
+`Levtos/benni-core-contracts`; the release tag is `v0.2.0-alpha.1`. Installation
 is a package distribution step only: it does not activate a ConfigEntry, create
-entities, alter a registry, or constitute live approval. No Home Assistant
-instance was changed.
+entities, alter a registry, or constitute live approval. The UX becomes
+available as a read-only Home Assistant sidebar panel after the integration is
+installed and its explicit Benni ConfigEntry is loaded.
 
 See [the architecture](docs/architecture.md), the
 [Gate Pack v1](docs/gate-pack-v1.md), the
@@ -33,12 +35,16 @@ and the
 as well as the
 [implementation status](docs/implementation-status.md).
 
+The read-only UX structure and live-install procedure are in
+[ux-implementation.md](docs/ux-implementation.md). The shared standard pointer
+is in [ux-frontend-standard.md](docs/ux-frontend-standard.md).
+
 The Shadow-only release scope and boundaries are in
 [Benni Shadow-Only Release Candidate v1](docs/benni-shadow-only-release-v1.md).
 The separate installation procedure is in
 [installation-shadow-only.md](docs/installation-shadow-only.md). Release
 details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
-notes are in [release-notes-shadow-0.1.0-alpha.2.md](docs/release-notes-shadow-0.1.0-alpha.2.md).
+notes are in [release-notes-shadow-0.2.0-alpha.1.md](docs/release-notes-shadow-0.2.0-alpha.1.md).
 
 The Source Binding Evidence Gate contains only versioned, read-only evidence
 records. It does not populate the ConfigEntry or activate any binding.

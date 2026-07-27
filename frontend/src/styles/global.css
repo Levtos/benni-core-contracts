@@ -1,0 +1,72 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+}
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.muted { color: var(--color-text-muted); }
+.eyebrow { color: var(--color-text-muted); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.surface-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.status-badge.healthy { border-color: var(--color-success-border); background: var(--color-success-subtle); color: var(--color-success-foreground); }
+.status-badge.warning { border-color: var(--color-warning-border); background: var(--color-warning-subtle); color: var(--color-warning-foreground); }
+.status-badge.danger { border-color: var(--color-danger-border); background: var(--color-danger-subtle); color: var(--color-danger-foreground); }
+.status-badge.info { border-color: var(--color-info-border); background: var(--color-info-subtle); color: var(--color-info-foreground); }
+.status-badge.active { border-color: var(--color-action-border); background: var(--color-action-subtle); color: var(--color-action-foreground); }
+.status-badge.neutral { color: var(--color-text-secondary); background: var(--color-surface-elevated); }
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 240px;
+  padding: var(--space-8);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  text-align: center;
+}
+.empty-state h3, .empty-state p { margin: 0; }
+.empty-state h3 { font-size: 1rem; }
+.empty-state p { max-width: 520px; color: var(--color-text-secondary); line-height: 1.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

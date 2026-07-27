@@ -1,7 +1,7 @@
 # Geplante Benni-Installation: Shadow-only v1
 
 Diese Anleitung beschreibt die Voraussetzungen und den kontrollierten Ablauf
-für die ausdrücklich read-only Shadow-Installation der Alpha `0.1.0-alpha.2`.
+für die ausdrücklich read-only Shadow-Installation der Alpha `0.2.0-alpha.1`.
 Der Release ist über den öffentlichen GitHub-Mirror als HACS-Quelle
 installierbar. Die Installation wurde von Codex nicht auf Home Assistant
 ausgeführt; sie aktiviert weder ConfigEntry noch SourceBindings automatisch.
@@ -11,7 +11,7 @@ ausgeführt; sie aktiviert weder ConfigEntry noch SourceBindings automatisch.
 Vor einer Installation müssen alle folgenden Punkte separat bestätigt sein:
 
 1. Der HACS-Eintrag `Levtos/benni-core-contracts` und der Tag
-   `v0.1.0-alpha.2` zeigen auf denselben geprüften Commit. HACS muss
+   `v0.2.0-alpha.1` zeigen auf denselben geprüften Commit. HACS muss
    benutzerseitig auf diesen Pre-Release-Tag oder den Repository-Stand zeigen.
 2. Die Installation erfolgt ausschließlich auf Benni/Einhornzentrale. Das
    Elternprofil bleibt `parent_future` und wird nicht installiert oder
@@ -47,6 +47,11 @@ Die zuständige Person prüft read-only:
 - die Rohsource-, Fallback-, Fusion-, Diagnose- und Policy-Zwischenwerte
   erscheinen nicht als Entities;
 - fehlender Zugriff führt zu `OPEN`/`blocked` und nicht zu erfundenen States;
+- das Sidebar-Panel `Core Contracts` zeigt reale Payloads aus den fünf
+  erlaubten read-only-WebSocket-Kommandos; eine lokale Preview-Fixture wird in
+  Home Assistant nicht verwendet;
+- Desktop und Lenovo M11 bleiben innerhalb der Bedienbarkeitsprüfung frei von
+  Aktionen, Services und öffentlichen HA-Entities;
 - Opening, Lock und Cover-Position bleiben bei fehlender, stale, retained,
   restaurierter oder konfliktärer Evidence `unknown` und verwenden `reject`.
 

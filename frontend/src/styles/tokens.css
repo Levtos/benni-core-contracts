@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --color-background: #14161a;
+  --color-surface: #1c1f24;
+  --color-surface-elevated: #252a32;
+  --color-border: #343b46;
+  --color-text-primary: #f2f4f7;
+  --color-text-secondary: #c5cbd4;
+  --color-text-muted: #9aa4b2;
+
+  --color-info: #8aadf4;
+  --color-success: #a6e3a1;
+  --color-warning: #f9e2af;
+  --color-danger: #f38ba8;
+  --color-automation: #cba6f7;
+  --color-media: #f5c2e7;
+  --color-action: #94e2d5;
+  --color-energy: #fab387;
+
+  --color-info-subtle: color-mix(in srgb, var(--color-info) 12%, transparent);
+  --color-info-border: color-mix(in srgb, var(--color-info) 42%, var(--color-border));
+  --color-info-foreground: #dce8ff;
+  --color-info-hover: color-mix(in srgb, var(--color-info) 20%, var(--color-surface));
+  --color-info-active: color-mix(in srgb, var(--color-info) 30%, var(--color-surface));
+  --color-info-disabled: color-mix(in srgb, var(--color-info) 25%, var(--color-text-muted));
+
+  --color-success-subtle: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-success-border: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
+  --color-success-foreground: #e5f9e1;
+  --color-success-hover: color-mix(in srgb, var(--color-success) 20%, var(--color-surface));
+  --color-success-active: color-mix(in srgb, var(--color-success) 30%, var(--color-surface));
+  --color-success-disabled: color-mix(in srgb, var(--color-success) 25%, var(--color-text-muted));
+
+  --color-warning-subtle: color-mix(in srgb, var(--color-warning) 13%, transparent);
+  --color-warning-border: color-mix(in srgb, var(--color-warning) 44%, var(--color-border));
+  --color-warning-foreground: #fff4cf;
+  --color-warning-hover: color-mix(in srgb, var(--color-warning) 20%, var(--color-surface));
+  --color-warning-active: color-mix(in srgb, var(--color-warning) 30%, var(--color-surface));
+  --color-warning-disabled: color-mix(in srgb, var(--color-warning) 25%, var(--color-text-muted));
+
+  --color-danger-subtle: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  --color-danger-border: color-mix(in srgb, var(--color-danger) 44%, var(--color-border));
+  --color-danger-foreground: #ffe0e8;
+  --color-danger-hover: color-mix(in srgb, var(--color-danger) 20%, var(--color-surface));
+  --color-danger-active: color-mix(in srgb, var(--color-danger) 30%, var(--color-surface));
+  --color-danger-disabled: color-mix(in srgb, var(--color-danger) 25%, var(--color-text-muted));
+
+  --color-automation-subtle: color-mix(in srgb, var(--color-automation) 12%, transparent);
+  --color-automation-border: color-mix(in srgb, var(--color-automation) 42%, var(--color-border));
+  --color-automation-foreground: #f1e5ff;
+  --color-automation-hover: color-mix(in srgb, var(--color-automation) 20%, var(--color-surface));
+  --color-automation-active: color-mix(in srgb, var(--color-automation) 30%, var(--color-surface));
+  --color-automation-disabled: color-mix(in srgb, var(--color-automation) 25%, var(--color-text-muted));
+
+  --color-media-subtle: color-mix(in srgb, var(--color-media) 12%, transparent);
+  --color-media-border: color-mix(in srgb, var(--color-media) 42%, var(--color-border));
+  --color-media-foreground: #ffe8f8;
+  --color-media-hover: color-mix(in srgb, var(--color-media) 20%, var(--color-surface));
+  --color-media-active: color-mix(in srgb, var(--color-media) 30%, var(--color-surface));
+  --color-media-disabled: color-mix(in srgb, var(--color-media) 25%, var(--color-text-muted));
+
+  --color-action-subtle: color-mix(in srgb, var(--color-action) 12%, transparent);
+  --color-action-border: color-mix(in srgb, var(--color-action) 42%, var(--color-border));
+  --color-action-foreground: #ddfff8;
+  --color-action-hover: color-mix(in srgb, var(--color-action) 20%, var(--color-surface));
+  --color-action-active: color-mix(in srgb, var(--color-action) 30%, var(--color-surface));
+  --color-action-disabled: color-mix(in srgb, var(--color-action) 25%, var(--color-text-muted));
+
+  --color-energy-subtle: color-mix(in srgb, var(--color-energy) 12%, transparent);
+  --color-energy-border: color-mix(in srgb, var(--color-energy) 42%, var(--color-border));
+  --color-energy-foreground: #ffe9d9;
+  --color-energy-hover: color-mix(in srgb, var(--color-energy) 20%, var(--color-surface));
+  --color-energy-active: color-mix(in srgb, var(--color-energy) 30%, var(--color-surface));
+  --color-energy-disabled: color-mix(in srgb, var(--color-energy) 25%, var(--color-text-muted));
+
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --shadow-panel: 0 18px 50px color-mix(in srgb, var(--color-background) 55%, transparent);
+  --transition-fast: 160ms ease;
+}
