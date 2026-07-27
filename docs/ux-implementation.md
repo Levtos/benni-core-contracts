@@ -85,7 +85,9 @@ HA-Entities.
 
 Die Release-Reihenfolge ist:
 
-1. GitLab-MR aus dem UX-Branch erstellen, CI abwarten und über GitLab mergen.
+1. Den dokumentierten lokalen grünen Teststand als technischen Nachweis
+   verwenden und den GitLab-MR regulär mergen. Eine Pipeline ist für diesen
+   Core-Contracts-Slice weder Merge- noch Release- oder Abnahme-Gate.
 2. Die Minor-Alpha `v0.2.0-alpha.1` auf dem GitLab-Default-Branch taggen.
 3. Den bestehenden GitLab-Mirror-Job und den GitHub-HACS-Pre-Release prüfen;
    es gibt keinen manuellen GitHub-Push oder manuellen GitHub-Release.

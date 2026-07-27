@@ -26,7 +26,10 @@ secret mount, GitLab API token, or GitHub mirror token is exposed to test
 containers. Release credentials remain protected GitLab CI variables and are
 available only under the rules of the central release job.
 
-The existing media release runner is not assigned to `core-contracts`.
+The existing media release runner is not assigned to `core-contracts`. The
+project runner remains available for the repository's existing optional CI and
+release jobs; a successful pipeline is not a merge, release, or acceptance
+requirement for Core Contracts.
 
 ## Health check
 
@@ -53,7 +56,9 @@ Do not reuse another project's runner or a legacy registration token.
    register it with the one-time authentication token.
 4. Reapply the properties in the assignment table and confirm the project
    lists no foreign runner.
-5. Run the complete MR pipeline before merging.
+5. If a pipeline is needed for an independent diagnostic or release check,
+   observe it separately. Do not make it a prerequisite for merging or
+   accepting Core Contracts work.
 
 Runner authentication tokens must never be committed, printed in job logs, or
 stored in repository files.
