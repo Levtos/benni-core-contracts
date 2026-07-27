@@ -7,7 +7,7 @@ CONFIG_SCHEMA_VERSION = 1
 STORAGE_SCHEMA_VERSION = 2
 GATE_PACK_VERSION = 1
 WEBSOCKET_PAYLOAD_VERSION = 1
-RELEASE_VERSION = "0.1.0-alpha.2"
+RELEASE_VERSION = "0.2.0-alpha.1"
 RELEASE_CHANNEL = "shadow_only"
 
 # The only selectable/activatable mode in this release candidate.  A missing
@@ -36,6 +36,15 @@ WS_COMMANDS = (
     WS_GET_GRAPH,
     WS_GET_HEALTH,
 )
+
+DATA_VIEW_STATIC = "_view_static_registered"
+DATA_VIEW_PANEL = "_view_panel_registered"
+PANEL_URL_PATH = "benni_core_contracts"
+PANEL_TITLE = "Core Contracts"
+PANEL_ICON = "mdi:vector-polyline"
+FRONTEND_DIR_URL = "/benni_core_contracts_app"
+FRONTEND_ENTRY = f"{FRONTEND_DIR_URL}/index.js"
+PANEL_ELEMENT = "benni-core-contracts-panel"
 
 CONF_PROFILE = "profile"
 CONF_MODE = "mode"

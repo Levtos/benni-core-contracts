@@ -1,0 +1,30 @@
+{
+  "name": "benni-core-contracts-ux",
+  "private": true,
+  "version": "0.2.0-alpha.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "bits-ui": "^2.18.1",
+    "@lucide/svelte": "^1.27.0",
+    "svelte": "^5.56.8"
+  },
+  "devDependencies": {
+    "@tsconfig/svelte": "^5.0.8",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "shadcn-svelte": "^1.4.2",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.5.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.1.5",
+    "vitest": "^3.2.4",
+    "svelte-check": "^4.3.1"
+  }
+}

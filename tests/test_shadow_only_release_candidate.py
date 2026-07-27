@@ -50,6 +50,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
                 "bindings": [],
             },
             options={},
+            async_on_unload=lambda _callback: None,
         )
 
     def test_release_metadata_is_explicit_shadow_prerelease(self) -> None:
@@ -59,7 +60,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_VERSION, "0.1.0-alpha.2")
+        self.assertEqual(RELEASE_VERSION, "0.2.0-alpha.1")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
@@ -67,7 +68,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
     def test_release_documents_and_ci_are_version_consistent(self) -> None:
         release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
-        release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.0-alpha.2.md").read_text(
+        release_notes = (ROOT / "docs" / "release-notes-shadow-0.2.0-alpha.1.md").read_text(
             encoding="utf-8"
         )
         gitlab_ci = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
@@ -91,7 +92,12 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
         )
         for path in ROOT.rglob("*"):
-            if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+            if (
+                not path.is_file()
+                or ".git" in path.parts
+                or "__pycache__" in path.parts
+                or "node_modules" in path.parts
+            ):
                 continue
             try:
                 source = path.read_text(encoding="utf-8")
@@ -152,6 +158,10 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             ),
             patch(
                 "custom_components.benni_core_contracts.async_attach_source_listeners",
+                new=AsyncMock(),
+            ),
+            patch(
+                "custom_components.benni_core_contracts.async_setup_view",
                 new=AsyncMock(),
             ),
         ):
