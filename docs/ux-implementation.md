@@ -6,7 +6,8 @@ Svelte-5-Ansicht für die bereits vorhandene read-only WebSocket-API von
 Assistant: In der installierten Panel-Instanz werden nur reale Antworten der
 aktiven HA-Verbindung dargestellt. Die Umsetzung ist in
 [ha-platform/control#59](https://gitlab.b-struck.de/ha-platform/control/-/work_items/59)
-dokumentiert.
+dokumentiert; der Code läuft über
+[GitLab-MR !4](https://gitlab.b-struck.de/ha-platform/core-contracts/-/merge_requests/4).
 
 ## Schichten und Eigentum
 
