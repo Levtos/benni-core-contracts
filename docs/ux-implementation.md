@@ -4,7 +4,9 @@ Stand: 2026-07-27. Dieser Slice liefert eine echte, statisch gebündelte
 Svelte-5-Ansicht für die bereits vorhandene read-only WebSocket-API von
 `benni_core_contracts`. Die Ansicht ist kein Preview-Ersatz für Home
 Assistant: In der installierten Panel-Instanz werden nur reale Antworten der
-aktiven HA-Verbindung dargestellt.
+aktiven HA-Verbindung dargestellt. Die Umsetzung ist in
+[ha-platform/control#59](https://gitlab.b-struck.de/ha-platform/control/-/work_items/59)
+dokumentiert.
 
 ## Schichten und Eigentum
 
