@@ -1,6 +1,6 @@
 # Implementierungsstatus – control#57
 
-Stand: 2026-07-28, Benni Shadow-only Alpha `0.2.0-alpha.2`,
+Stand: 2026-07-28, Benni Shadow-only Release `0.1.0`,
 UX-Release-Gate in technischer Bereitstellung.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
@@ -240,7 +240,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.2.0-alpha.2`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.1.0`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` und `published` werden nicht als Default oder
@@ -258,11 +258,11 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.2.0-alpha.2`. `zip_release=false` lässt HACS den synchronisierten
-  Repository-Stand verwenden. `.gitlab-ci.yml` bindet das zentrale
-  Mirror-Gate und führt die stdlib-only Boundary-Suite vor dem Releasejob aus;
-  `.github/workflows/hacs-release.yml` erstellt und prüft den GitHub-
-  Pre-Release.
+  `0.1.0`. `zip_release=false` lässt HACS den synchronisierten
+  Repository-Stand verwenden. Die GitLab-Pipeline ist für dieses Repository
+  kein Merge-, Release- oder Abnahme-Gate; der lokale grüne Teststand ist der
+  technische Nachweis. Der bestehende Mirror-/HACS-Weg veröffentlicht den
+  GitHub-Stable-Release.
 - Eine Installation darf nur auf Benni/Einhornzentrale und nach separater
   read-only Freigabe erfolgen. Nach technischer Bereitstellung bleibt die
   Issue-Abnahme auf `testing`, bis Benni die reale UX in HA bestätigt.
@@ -282,7 +282,7 @@ Ran 124 tests ... OK
 ```
 
 Live-Evidence bleibt wegen HTTP 401 des autorisierten State-API-Zugriffs
-offen; der Paket-Pre-Release schließt dieses Gate nicht.
+offen; der Paket-Release schließt dieses Gate nicht.
 
 Die GitLab-CI-Suite verwendet den dedizierten, projektgebundenen Docker-Runner
 `core-contracts-ci` (Runner 2) in LXC 122. Der Runner führt keine ungetaggten

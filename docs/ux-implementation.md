@@ -1,6 +1,6 @@
 # Core Contracts UX – technische Bereitstellung
 
-Stand: 2026-07-27. Dieser Slice liefert eine echte, statisch gebündelte
+Stand: 2026-07-28. Dieser Slice liefert eine echte, statisch gebündelte
 Svelte-5-Ansicht für die bereits vorhandene read-only WebSocket-API von
 `benni_core_contracts`. Die Ansicht ist kein Preview-Ersatz für Home
 Assistant: In der installierten Panel-Instanz werden nur reale Antworten der
@@ -88,8 +88,8 @@ Die Release-Reihenfolge ist:
 1. Den dokumentierten lokalen grünen Teststand als technischen Nachweis
    verwenden und den GitLab-MR regulär mergen. Eine Pipeline ist für diesen
    Core-Contracts-Slice weder Merge- noch Release- oder Abnahme-Gate.
-2. Die Patch-Alpha `v0.2.0-alpha.2` auf dem GitLab-Default-Branch taggen.
-3. Den bestehenden GitLab-Mirror-Job und den GitHub-HACS-Pre-Release prüfen;
+2. Den stabilen Release `v0.1.0` auf dem GitLab-Default-Branch taggen.
+3. Den bestehenden GitLab-Mirror-Job und den GitHub-HACS-Release prüfen;
    es gibt keinen manuellen GitHub-Push oder manuellen GitHub-Release.
 4. Auf **Einhornzentrale** (`192.168.178.106:8123`) die installierbare
    HACS-Version auswählen und anschließend den expliziten ConfigEntry mit
@@ -124,7 +124,7 @@ Der UX-Release kann ohne Datenmigration zurückgenommen werden:
    falls Benni ihn für den Test angelegt hat. Dieser Schritt wird nicht
    automatisch von der UX ausgeführt.
 2. Für einen dauerhaften Release-Rollback einen normalen GitLab-Revert-MR
-   erstellen, mergen und den revertierten Zustand als neuen Patch-/Alpha-Tag
+   erstellen, mergen und den revertierten Zustand als neuen Patch-Tag
    veröffentlichen; die HACS-Mirror- und GitHub-Actions-Prüfungen laufen erneut
    über den bestehenden Workflow. Es gibt keinen Force-Push, keine Tag-Löschung
    und keine manuelle GitHub-Änderung.

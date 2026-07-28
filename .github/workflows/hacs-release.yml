@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    name: Verify and publish Shadow-only pre-release
+    name: Verify and publish Shadow-only release
     runs-on: ubuntu-latest
     steps:
       - name: Check out mirrored tag
@@ -26,8 +26,8 @@ jobs:
           VERSION="${TAG#v}"
           test "$TAG" != "$VERSION"
           case "$VERSION" in
-            *-alpha.*|*-beta.*|*-rc.*) ;;
-            *) echo "Expected an explicit pre-release version, got $VERSION" >&2; exit 1 ;;
+            *-*) echo "Expected a stable release version without a pre-release suffix, got $VERSION" >&2; exit 1 ;;
+            *) ;;
           esac
           python - "$VERSION" <<'PY'
           import json
@@ -56,32 +56,30 @@ jobs:
           print(f"verified shadow-only package {version}")
           PY
 
-      - name: Create or verify GitHub pre-release
+      - name: Create or verify GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           set -eu
           VERSION="${TAG#v}"
-          TITLE="Benni Core Contracts ${VERSION} — Shadow-only Alpha"
+          TITLE="Benni Core Contracts ${VERSION} — Shadow-only"
           NOTES="docs/release-notes-shadow-${VERSION}.md"
           test -f "$NOTES"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release edit "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --title "$TITLE" \
-              --notes-file "$NOTES" \
-              --prerelease
+              --notes-file "$NOTES"
           else
             gh release create "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --title "$TITLE" \
               --notes-file "$NOTES" \
-              --prerelease \
               --verify-tag
           fi
 
-      - name: Verify GitHub pre-release
+      - name: Verify GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -89,7 +87,7 @@ jobs:
           set -eu
           VERSION="${TAG#v}"
           gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
-            --jq 'select(.draft == false and .prerelease == true) | .tag_name' \
+            --jq 'select(.draft == false and .prerelease == false) | .tag_name' \
             | grep -Fx "$TAG"
           gh api "repos/${GITHUB_REPOSITORY}/contents/custom_components/benni_core_contracts/manifest.json?ref=${TAG}" \
             --jq '.content' \

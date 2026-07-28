@@ -2,7 +2,20 @@ import { mount, unmount } from "svelte";
 import App from "./app/App.svelte";
 import { CoreContractsStore } from "./lib/core-contracts/store.svelte";
 import type { HassLike } from "./lib/core-contracts/types";
-import "./styles/global.css";
+import globalStyles from "./styles/global.css?inline";
+
+const GLOBAL_STYLE_ATTRIBUTE = "data-benni-core-contracts-styles";
+
+function ensureGlobalStyles(): void {
+  if (document.head.querySelector(`style[${GLOBAL_STYLE_ATTRIBUTE}]`)) return;
+
+  const style = document.createElement("style");
+  style.setAttribute(GLOBAL_STYLE_ATTRIBUTE, "");
+  style.textContent = globalStyles;
+  document.head.append(style);
+}
+
+ensureGlobalStyles();
 
 class BenniCoreContractsPanel extends HTMLElement {
   private readonly store = new CoreContractsStore();

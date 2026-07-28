@@ -2,10 +2,15 @@
 
 * { box-sizing: border-box; }
 
-html, body, #app {
+html, body, #app, benni-core-contracts-panel {
   min-width: 320px;
   min-height: 100%;
   margin: 0;
+}
+
+benni-core-contracts-panel {
+  display: block;
+  width: 100%;
 }
 
 body {
