@@ -53,14 +53,14 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             async_on_unload=lambda _callback: None,
         )
 
-    def test_release_metadata_is_explicit_shadow_prerelease(self) -> None:
+    def test_release_metadata_is_stable_shadow_release(self) -> None:
         manifest = json.loads((PACKAGE / "manifest.json").read_text(encoding="utf-8"))
         hacs = json.loads((ROOT / "hacs.json").read_text(encoding="utf-8"))
         project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_VERSION, "0.2.0-alpha.2")
+        self.assertEqual(RELEASE_VERSION, "0.1.0")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
@@ -68,7 +68,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
     def test_release_documents_and_ci_are_version_consistent(self) -> None:
         release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
-        release_notes = (ROOT / "docs" / "release-notes-shadow-0.2.0-alpha.2.md").read_text(
+        release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.0.md").read_text(
             encoding="utf-8"
         )
         gitlab_ci = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
@@ -82,7 +82,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             self.assertIn("parent_future", document)
         self.assertIn('HACS_GITHUB_REPOSITORY: "Levtos/benni-core-contracts"', gitlab_ci)
         self.assertIn("ha-platform/control", gitlab_ci)
-        self.assertIn("--prerelease", github_workflow)
+        self.assertNotIn("--prerelease", github_workflow)
         self.assertIn("custom_components/benni_core_contracts/manifest.json", github_workflow)
 
     def test_repository_contains_no_secret_material(self) -> None:

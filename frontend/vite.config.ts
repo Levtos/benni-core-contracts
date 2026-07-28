@@ -3,7 +3,14 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [svelte(), tailwindcss()],
+  plugins: [
+    svelte({
+      compilerOptions: {
+        css: "injected",
+      },
+    }),
+    tailwindcss(),
+  ],
   base: "./",
   build: {
     outDir: "../custom_components/benni_core_contracts/frontend/app",
