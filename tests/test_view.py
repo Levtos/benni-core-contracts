@@ -12,8 +12,10 @@ from custom_components.benni_core_contracts.const import (
     DATA_VIEW_STATIC,
     DOMAIN,
     FRONTEND_DIR_URL,
+    FRONTEND_ENTRY,
     PANEL_ELEMENT,
     PANEL_URL_PATH,
+    RELEASE_VERSION,
 )
 from custom_components.benni_core_contracts.view import async_remove_view, async_setup_view
 
@@ -77,7 +79,10 @@ class ViewRegistrationTests(unittest.TestCase):
         self.assertEqual(len(registered_panels), 1)
         self.assertEqual(registered_panels[0]["frontend_url_path"], PANEL_URL_PATH)
         self.assertEqual(registered_panels[0]["config"]["_panel_custom"]["name"], PANEL_ELEMENT)
-        self.assertIn("index.js?", registered_panels[0]["config"]["_panel_custom"]["module_url"])
+        self.assertEqual(
+            registered_panels[0]["config"]["_panel_custom"]["module_url"],
+            f"{FRONTEND_ENTRY}?{RELEASE_VERSION}",
+        )
         self.assertEqual(removed_panels, [PANEL_URL_PATH])
         self.assertFalse(hass.data[DOMAIN][DATA_VIEW_PANEL])
         self.assertTrue(hass.data[DOMAIN][DATA_VIEW_STATIC])

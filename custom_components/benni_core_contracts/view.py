@@ -15,22 +15,16 @@ from .const import (
     PANEL_ICON,
     PANEL_TITLE,
     PANEL_URL_PATH,
+    RELEASE_VERSION,
 )
 
 _APP_DIR = Path(__file__).resolve().parent / "frontend" / "app"
 
 
 def _cache_bust() -> str:
-    """Use the newest bundled asset timestamp for HA panel revalidation."""
+    """Use the release version without blocking the Home Assistant loop."""
 
-    newest = 0
-    for path in _APP_DIR.rglob("*") if _APP_DIR.exists() else ():
-        if path.is_file():
-            try:
-                newest = max(newest, path.stat().st_mtime_ns)
-            except OSError:
-                continue
-    return str(newest or 0)
+    return RELEASE_VERSION
 
 
 async def async_setup_view(hass: Any) -> None:

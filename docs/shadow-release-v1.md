@@ -1,12 +1,12 @@
 # Benni Core Contracts — Shadow-only Alpha v1
 
-Stand: 2026-07-27. Release-Version: `0.2.0-alpha.1`.
+Stand: 2026-07-28. Release-Version: `0.2.0-alpha.2`.
 
 ## Release-Identität
 
 - GitLab-Quelle: `ha-platform/core-contracts`
 - GitHub-HACS-Mirror: `Levtos/benni-core-contracts`
-- Git-Tag: `v0.2.0-alpha.1`
+- Git-Tag: `v0.2.0-alpha.2`
 - HA-Domain: `benni_core_contracts`
 - einziger aktivierbarer Modus: `shadow_only`
 - einziges produktives Shadow-Profil: `benni`
@@ -31,7 +31,7 @@ wird nicht aktiviert. Lock und Cover-Position bleiben Evidence-only.
 
 1. HACS muss das Repository `Levtos/benni-core-contracts` als Custom
    Integration verwenden.
-2. Für diese Alpha muss der Tag `v0.2.0-alpha.1` ausgewählt werden.
+2. Für diese Alpha muss der Tag `v0.2.0-alpha.2` ausgewählt werden.
 3. HACS muss die Integration unter `custom_components/benni_core_contracts`
    installieren; `hacs.json` verwendet dafür `content_in_root=false` und
    `zip_release=false`.
