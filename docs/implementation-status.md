@@ -1,6 +1,6 @@
 # Implementierungsstatus – control#57
 
-Stand: 2026-07-28, Benni Shadow-only Release `0.1.0`,
+Stand: 2026-07-28, Benni Shadow-only Release `0.1.1`,
 UX-Release-Gate in technischer Bereitstellung.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
@@ -240,7 +240,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.1.0`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.1.1`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` und `published` werden nicht als Default oder
@@ -258,7 +258,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.1.0`. `zip_release=false` lässt HACS den synchronisierten
+  `0.1.1`. `zip_release=false` lässt HACS den synchronisierten
   Repository-Stand verwenden. Die GitLab-Pipeline ist für dieses Repository
   kein Merge-, Release- oder Abnahme-Gate; der lokale grüne Teststand ist der
   technische Nachweis. Der bestehende Mirror-/HACS-Weg veröffentlicht den
