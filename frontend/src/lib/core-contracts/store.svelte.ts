@@ -95,8 +95,12 @@ export class CoreContractsStore {
   async refresh(): Promise<void> {
     if (!this.client || this.refreshing || this.previewMode) return;
     this.refreshing = true;
-    this.connectionState = this.contracts.length ? "reconnecting" : "loading";
-    this.errorMessage = null;
+    // Background polling must not make the live shell oscillate between
+    // connected and reconnecting. Only the first attempt after an unavailable
+    // connection needs a loading transition; successful refreshes stay quiet.
+    if (this.connectionState === "unavailable" && this.lastUpdated === null) {
+      this.connectionState = "loading";
+    }
     try {
       const revision = this.revision || undefined;
       const [contractsPayload, diagnosticsPayload, graphPayload, healthPayload] = await Promise.all([
@@ -121,6 +125,7 @@ export class CoreContractsStore {
         healthPayload.revision ?? 0,
       );
       this.lastUpdated = new Date().toISOString();
+      this.errorMessage = null;
       this.connectionState = "connected";
       this.dataState = this.deriveDataState(this.contracts);
       if (!this.selectedContractId && this.contracts[0]) {
