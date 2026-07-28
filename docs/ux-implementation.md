@@ -88,7 +88,7 @@ Die Release-Reihenfolge ist:
 1. Den dokumentierten lokalen grünen Teststand als technischen Nachweis
    verwenden und den GitLab-MR regulär mergen. Eine Pipeline ist für diesen
    Core-Contracts-Slice weder Merge- noch Release- oder Abnahme-Gate.
-2. Die Minor-Alpha `v0.2.0-alpha.1` auf dem GitLab-Default-Branch taggen.
+2. Die Patch-Alpha `v0.2.0-alpha.2` auf dem GitLab-Default-Branch taggen.
 3. Den bestehenden GitLab-Mirror-Job und den GitHub-HACS-Pre-Release prüfen;
    es gibt keinen manuellen GitHub-Push oder manuellen GitHub-Release.
 4. Auf **Einhornzentrale** (`192.168.178.106:8123`) die installierbare
