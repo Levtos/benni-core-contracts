@@ -1,13 +1,10 @@
-# Core Contracts repository context
+# Claude bootstrap: benni-core-contracts
 
-The workspace-level `D:\Dokumente\GitHub\CLAUDE.md` is the canonical ownership
-and workflow context. This repository owns the `benni_core_contracts` read-only
-foundation and its narrowly scoped reference UX.
-
-Before changing the frontend, use the binding UX standard from
-`ha-platform/control#58` and `docs/adr/0001-ux-frontend-standard.md`. Keep the
-shared app shell/design tokens/components separate from the Core-Contracts
-module so the structure can later be reused by Umbrella UX work.
-
-The current release remains shadow-only: no entities, services, policy
-decisions, actuation, client-side secrets, or fleet-wide frontend migration.
+- GitHub is the active source of truth; Levtos/control contains the central rules and Project Memory.
+- Read the full Issue and comments, add it to Platform Workflow, and set known fields before coding.
+- Benni decides behavior. Keep implementation narrow and create a new Issue for unrelated findings.
+- Use a clean clone/worktree, branch, PR, checks, and server-side merge. Do not overwrite dirty worktrees.
+- Stable releases are standard; pre-releases need Benni's explicit decision.
+- End technical E2E at visible HACS availability. Testing is not Live; Benni owns Live / Live Verified.
+- Use git, gh, and control/tools/github_workflow.py. Never output secrets.
+- Keep private HA configuration and LXC 104/MCPHub/LeanCTX outside this repository.
