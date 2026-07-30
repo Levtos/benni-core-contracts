@@ -2,7 +2,7 @@
 
 Diese Anleitung beschreibt die Voraussetzungen und den kontrollierten Ablauf
 für die ausdrücklich read-only Shadow-Installation des stabilen Releases
-`0.1.3`.
+`0.1.4`.
 Der Release ist über den öffentlichen GitHub-Mirror als HACS-Quelle
 installierbar. Die Installation wurde von Codex nicht auf Home Assistant
 ausgeführt; sie aktiviert weder ConfigEntry noch SourceBindings automatisch.
@@ -11,7 +11,7 @@ ausgeführt; sie aktiviert weder ConfigEntry noch SourceBindings automatisch.
 
 Vor einer Installation müssen alle folgenden Punkte separat bestätigt sein:
 
-1. Der HACS-Eintrag `Levtos/benni-core-contracts` und der Tag `v0.1.3`
+1. Der HACS-Eintrag `Levtos/benni-core-contracts` und der Tag `v0.1.4`
    zeigen auf denselben geprüften Commit. HACS muss benutzerseitig den
    stabilen Release auswählen.
 2. Die Installation erfolgt ausschließlich auf Benni/Einhornzentrale. Das

@@ -47,17 +47,17 @@ if HA_AVAILABLE:
                 vol.Required("opening_open_source"): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain="binary_sensor",
-                        include_entities=(
+                        include_entities=[
                             PILOT_OPENING_OPEN_SOURCE_ENTITY_ID,
-                        ),
+                        ],
                     )
                 ),
                 vol.Required("opening_tilt_source"): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain="binary_sensor",
-                        include_entities=(
+                        include_entities=[
                             PILOT_OPENING_TILT_SOURCE_ENTITY_ID,
-                        ),
+                        ],
                     )
                 ),
             }

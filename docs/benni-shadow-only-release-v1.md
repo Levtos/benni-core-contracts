@@ -1,7 +1,7 @@
 # Benni Shadow-Only Release v1
 
 Stand: 2026-07-28. Dieser installierbare Shadow-only-Release trägt die Version
-`0.1.3`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
+`0.1.4`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
 Runtime-Modus `shadow_only`.
 
 ## Zweck
@@ -70,7 +70,7 @@ wurden keine Tokens, Cookies oder vollständigen HA-Zustände gespeichert.
 ## Paket- und HACS-Status
 
 Manifest, `pyproject.toml` und die Shadow-Dokumentation verwenden
-`0.1.3`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
+`0.1.4`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
 kein Release-Zip (`zip_release=false`); HACS verwendet das kanonische
 öffentliche GitHub-Repository als Installationsquelle. Repository, Tag und
 Stable-Release müssen auf denselben Commit zeigen.
