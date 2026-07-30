@@ -71,7 +71,6 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
         release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.1.md").read_text(
             encoding="utf-8"
         )
-        gitlab_ci = (ROOT / ".gitlab-ci.yml").read_text(encoding="utf-8")
         github_workflow = (ROOT / ".github" / "workflows" / "hacs-release.yml").read_text(
             encoding="utf-8"
         )
@@ -80,8 +79,8 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             self.assertIn("shadow-only", document.lower())
             self.assertIn("0 HA-Entities", document)
             self.assertIn("parent_future", document)
-        self.assertIn('HACS_GITHUB_REPOSITORY: "Levtos/benni-core-contracts"', gitlab_ci)
-        self.assertIn("ha-platform/control", gitlab_ci)
+        self.assertIn("name: HACS Shadow-only release", github_workflow)
+        self.assertIn("actions/checkout@v4", github_workflow)
         self.assertNotIn("--prerelease", github_workflow)
         self.assertIn("custom_components/benni_core_contracts/manifest.json", github_workflow)
 
