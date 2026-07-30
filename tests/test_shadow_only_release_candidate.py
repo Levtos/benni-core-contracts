@@ -66,7 +66,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
         self.assertEqual(RELEASE_CHANNEL, MODE_SHADOW_ONLY)
 
-    def test_release_documents_and_ci_are_version_consistent(self) -> None:
+    def test_release_documents_and_github_workflow_are_version_consistent(self) -> None:
         release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
         release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.1.md").read_text(
             encoding="utf-8"
@@ -79,8 +79,11 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             self.assertIn("shadow-only", document.lower())
             self.assertIn("0 HA-Entities", document)
             self.assertIn("parent_future", document)
-        self.assertIn("name: HACS Shadow-only release", github_workflow)
-        self.assertIn("actions/checkout@v4", github_workflow)
+        self.assertIn(
+            "Levtos/control/.github/workflows/hacs-stable-release.yml@main",
+            github_workflow,
+        )
+        self.assertNotIn("gitlab", github_workflow.lower())
         self.assertNotIn("--prerelease", github_workflow)
         self.assertIn("custom_components/benni_core_contracts/manifest.json", github_workflow)
 
