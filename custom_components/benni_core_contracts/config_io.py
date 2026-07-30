@@ -31,6 +31,7 @@ class ConfigCodec:
             "profile",
             "mode",
             "entity_allowlist",
+            "published_contracts",
             "bindings",
         }
         if set(payload["config"]) - allowed_keys:

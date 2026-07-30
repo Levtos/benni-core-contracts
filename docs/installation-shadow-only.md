@@ -75,10 +75,16 @@ Schritt; sie wurden hier nicht ausgeführt.
 
 - Der direkte State-API-Zugriff auf Einhornzentrale liefert ohne
   Authentifizierung HTTP 401.
+- Die beiden konkreten Quellen des Opening-Piloten wurden am 30.07.2026
+  zusätzlich read-only als MQTT-Entities revalidiert:
+  `binary_sensor.kitchen_patio_door_open_contact` und
+  `binary_sensor.kitchen_patio_door_tilt_contact`. Das ist keine automatische
+  ConfigEntry-Aktivierung und kein Freshness-Pass für den Setup-Snapshot.
 - Eine aktuelle Registry-/Live-Revalidierung der kanonischen Lock-ID
   `lock.flur_aqara_smart_lock_u200` fehlt.
-- Gerätezeitstempel, nicht-retained State-Change-Evidence und Ownership sind
-  für die produktiven Kandidaten noch nicht belegt.
+- Gerätezeitstempel und explizite nicht-retained Event-Herkunft sind für die
+  Pilotquellen noch nicht aus dem State-Snapshot belegt; für die übrigen
+  produktiven Kandidaten bleiben sie ebenfalls offen.
 - Die Installation liefert noch keine Live-Evidence-Freigabe. Source-Owner,
   Gerätezeitstempel, nicht-retained State-Change-Evidence und Lock-
-  Revalidierung bleiben vor dem nächsten Benni-Shadow-Schritt offen.
+  Revalidierung bleiben vor dem nächsten Published-Live-Schritt offen.

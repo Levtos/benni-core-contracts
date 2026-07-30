@@ -892,8 +892,9 @@ def _opening_records(profile_id: ProfileId) -> list[SourceBindingEvidence]:
         )
         retained = None
         note = (
-            "Read-only Benni live lookup on 2026-07-23 returned the raw "
-            "contact entity and state."
+            "Read-only Benni live lookup on 2026-07-30 returned the raw "
+            "contact entity, MQTT ownership and current state/history. No "
+            "device timestamp or explicit retained marker was exposed."
         )
         question_tail = (
             "Confirm device timestamp availability and distinguish real HA "

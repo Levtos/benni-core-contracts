@@ -3,10 +3,35 @@
     "step": {
       "user": {
         "title": "Core Contracts",
-        "description": "Install the Benni read-only shadow_only release candidate.",
+        "description": "Install the Benni read-only Core Contracts integration. Shadow-only is the safe default; published mode requires an explicit pilot source selection.",
         "data": {
           "profile": "Profile",
-          "mode": "Mode (must be shadow_only)"
+          "mode": "Mode"
+        }
+      },
+      "published": {
+        "title": "Publish Opening Pilot",
+        "description": "Explicitly select the two raw contact entities for the Benni kitchen patio-door opening pilot. No other contract is published.",
+        "data": {
+          "opening_open_source": "Opening contact",
+          "opening_tilt_source": "Tilt contact"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Core Contracts options",
+        "data": {
+          "mode": "Mode"
+        }
+      },
+      "published": {
+        "title": "Publish Opening Pilot",
+        "data": {
+          "opening_open_source": "Opening contact",
+          "opening_tilt_source": "Tilt contact"
         }
       }
     }

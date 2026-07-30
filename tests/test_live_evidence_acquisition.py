@@ -357,7 +357,8 @@ class LiveEvidenceAcquisitionTests(unittest.TestCase):
             ConfigModel(mode=RuntimeMode.SHADOW_ONLY).bindings,
             (),
         )
-        for filename in ("sensor.py", "binary_sensor.py", "cover.py", "lock.py"):
+        self.assertTrue((PACKAGE / "sensor.py").exists())
+        for filename in ("binary_sensor.py", "cover.py", "lock.py"):
             self.assertFalse((PACKAGE / filename).exists())
         forbidden_tokens = (
             "async_add_entities",
@@ -369,6 +370,8 @@ class LiveEvidenceAcquisitionTests(unittest.TestCase):
             r"(?:benni_(?:core_devices|.*policy)|core_devices|policy_[a-z_]+)"
         )
         for path in PACKAGE.glob("*.py"):
+            if path.name == "sensor.py":
+                continue
             source = path.read_text(encoding="utf-8")
             for token in forbidden_tokens:
                 self.assertNotIn(token, source, path.name)

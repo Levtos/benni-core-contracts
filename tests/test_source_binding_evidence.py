@@ -451,7 +451,7 @@ class SourceBindingEvidenceTests(unittest.TestCase):
             "homeassistant.services",
         ):
             self.assertNotIn(token, source)
-        self.assertFalse((PACKAGE / "sensor.py").exists())
+        self.assertTrue((PACKAGE / "sensor.py").exists())
         self.assertFalse((PACKAGE / "binary_sensor.py").exists())
         self.assertIsNone(
             re.search(r"^\s*(?:from|import)\s+[^#\n]*(?:core_devices|policy)", source, re.MULTILINE)

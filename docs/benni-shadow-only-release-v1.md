@@ -61,17 +61,18 @@ nicht zu Freshness-Evidence aufgewertet. Unklare Herkunft bleibt `OPEN` bzw.
 `blocked`. Physische Opening-, Lock- und Positionsfelder dürfen ohne
 belastbare Evidence keinen positiven Zustand behaupten.
 
-Der aktuelle lokale Stand enthält keine neue Live-Evidence: Der direkte
-Einhornzentrale-State-Zugriff war ohne bereitgestellte Authentifizierung mit
-HTTP 401 blockiert. Es wurden keine Tokens, Cookies oder vollständigen HA-
-Zustände gespeichert.
+Der historische HTTP-State-API-Zugriff war ohne bereitgestellte
+Authentifizierung mit HTTP 401 blockiert. Eine spätere, begrenzte read-only
+Revalidierung belegte die beiden konkreten MQTT-Rohquellen des Opening-Piloten;
+Gerätezeitstempel und eine automatische Freigabe folgen daraus nicht. Es
+wurden keine Tokens, Cookies oder vollständigen HA-Zustände gespeichert.
 
 ## Paket- und HACS-Status
 
 Manifest, `pyproject.toml` und die Shadow-Dokumentation verwenden
 `0.1.1`. `hacs.json` beschreibt das Paket und aktiviert absichtlich
-kein Release-Zip (`zip_release=false`); HACS verwendet den öffentlichen
-GitHub-Mirror als Installationsquelle. GitLab-Quelle, GitHub-Mirror, Tag und
+kein Release-Zip (`zip_release=false`); HACS verwendet das kanonische
+öffentliche GitHub-Repository als Installationsquelle. Repository, Tag und
 Stable-Release müssen auf denselben Commit zeigen.
 
 Der Release enthält zusätzlich das statische, read-only Svelte-Panel für die

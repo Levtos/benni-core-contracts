@@ -1,4 +1,4 @@
-"""Reproducible repository and Shadow-only boundary validation."""
+"""Reproducible repository and contract-publication boundary validation."""
 
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ ENTITY_PLATFORM_FILES = {
     "sensor.py",
     "switch.py",
 }
+ALLOWED_ENTITY_PLATFORM_FILES = {"sensor.py"}
 FORBIDDEN_SOURCE_TOKENS = {
     "async_add_entities",
     "hass.services",
@@ -36,7 +37,7 @@ FORBIDDEN_IMPORT = re.compile(
 
 def tracked_files() -> tuple[Path, ...]:
     result = subprocess.run(
-        ["git", "ls-files", "-z"],
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -88,14 +89,34 @@ def validate_shadow_boundary() -> None:
         for path in INTEGRATION.iterdir()
         if path.is_file() and path.name in ENTITY_PLATFORM_FILES
     )
-    if existing_platforms:
+    unexpected_platforms = sorted(
+        set(existing_platforms) - ALLOWED_ENTITY_PLATFORM_FILES
+    )
+    if unexpected_platforms:
         raise SystemExit(
-            "public entity platforms are forbidden: " + ", ".join(existing_platforms)
+            "unapproved public entity platforms: " + ", ".join(unexpected_platforms)
         )
+
+    sensor_platform = INTEGRATION / "sensor.py"
+    if sensor_platform.exists():
+        source = sensor_platform.read_text(encoding="utf-8")
+        required_tokens = (
+            "PublishedRuntime",
+            "PILOT_OPENING_ENTITY_ID",
+            "async_add_entities",
+        )
+        for token in required_tokens:
+            if token not in source:
+                raise SystemExit(
+                    f"sensor.py: explicit PublishedContract boundary token missing: {token!r}"
+                )
 
     for path in sorted(INTEGRATION.glob("*.py")):
         source = path.read_text(encoding="utf-8")
-        for token in FORBIDDEN_SOURCE_TOKENS:
+        forbidden_tokens = FORBIDDEN_SOURCE_TOKENS - (
+            {"async_add_entities"} if path.name == "sensor.py" else set()
+        )
+        for token in forbidden_tokens:
             if token in source:
                 raise SystemExit(f"{path.name}: forbidden boundary token {token!r}")
         if FORBIDDEN_IMPORT.search(source):
@@ -112,7 +133,8 @@ def main() -> None:
         "repository_validation_ok "
         f"json={json_count} toml={toml_count} "
         f"whitespace_files={whitespace_count} "
-        "ha_entities=0 services=0 actuation=0 policy_imports=0"
+        "shadow_entities=0 published_pilot_allowlist=1 "
+        "services=0 actuation=0 policy_imports=0"
     )
 
 

@@ -25,6 +25,7 @@ def observation_from_state(
     *,
     received_at: datetime,
     state_event: bool = False,
+    retained: bool | None = None,
 ) -> RawObservation:
     """Normalize a HA State-like object without inferring a device timestamp.
 
@@ -37,7 +38,7 @@ def observation_from_state(
     device_timestamp = _as_datetime(
         attributes.get("device_timestamp") or attributes.get("last_device_update")
     )
-    retained = bool(attributes.get("retained", False))
+    retained = bool(attributes.get("retained", False)) if retained is None else retained
     if device_timestamp is not None:
         origin = FreshnessOrigin.DEVICE_TIMESTAMP
     else:
@@ -54,7 +55,11 @@ def observation_from_state(
             device_timestamp=device_timestamp,
             ha_timestamp=ha_timestamp,
             retained=retained,
-            ha_state_event=state_event and origin == FreshnessOrigin.HA_TIMESTAMP,
+            ha_state_event=(
+                state_event
+                and origin == FreshnessOrigin.HA_TIMESTAMP
+                and not retained
+            ),
         ),
     )
 
@@ -75,8 +80,12 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
                 new_state,
                 received_at=getattr(event, "time_fired", None) or utc_now(),
                 state_event=old_state is not None,
+                retained=bool(event.data.get("retained", False)),
             )
             runtime.graph.ingest(current_binding.binding_id, observation)
+            refresh = getattr(runtime, "refresh_published_contracts", None)
+            if refresh is not None:
+                refresh()
 
         unsubscribe = async_track_state_change_event(
             hass,
@@ -95,3 +104,6 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
                     state_event=False,
                 ),
             )
+            refresh = getattr(runtime, "refresh_published_contracts", None)
+            if refresh is not None:
+                refresh()

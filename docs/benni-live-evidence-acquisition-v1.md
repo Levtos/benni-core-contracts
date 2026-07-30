@@ -1,6 +1,7 @@
 # Benni Live Evidence Acquisition Gate v1
 
-Stand: 2026-07-23. Dieses Gate prüft ausschließlich read-only, ob für die
+Stand: 2026-07-30. Der ursprüngliche HTTP-Probe-Blocker ist als historischer
+Befund vom 23.07.2026 erhalten. Dieses Gate prüft ausschließlich read-only, ob für die
 bereits in der Source-Binding-Matrix v1 benannten Benni-Quellen ein aktueller,
 sanitizierter State-Snapshot mit belastbarer Zeit- und Ownership-Evidence
 vorliegt. Es aktiviert keine SourceBinding, verändert keine ConfigEntry,
@@ -28,6 +29,23 @@ Es wurden keine Tokens, Cookies oder Secrets verwendet oder gespeichert. Nach
 dem 401 wurden keine Entity-States geschätzt. Die aktuelle Acquisition-
 Bewertung lautet deshalb OPEN; für Required-Felder bleibt das nachgelagerte
 Contract-Gate blocked.
+
+## Nachfolgende Pilot-Revalidierung
+
+Am 30.07.2026 waren über den autorisierten read-only HA-MCP-Zugriff die beiden
+konkreten Opening-Pilotquellen beobachtbar:
+
+- `binary_sensor.kitchen_patio_door_open_contact`: `off`, MQTT,
+  `last_changed=last_updated=2026-07-29T10:19:41.133066+02:00`.
+- `binary_sensor.kitchen_patio_door_tilt_contact`: `on`, MQTT,
+  `last_changed=last_updated=2026-07-30T12:40:38.252564+02:00`.
+
+Die Registry-Zuordnung und MQTT-ConfigEntry sind read-only belegt. Ein
+Gerätezeitstempel und ein expliziter Retained-Marker fehlen weiterhin. Diese
+begrenzte Evidence reicht für die konkrete Published-ConfigFlow-Auswahl,
+aber nicht für eine automatische Aktivierung oder einen Freshness-Pass beim
+Setup. Die laufende `benni_core_contracts`-ConfigEntry bleibt Shadow-only; die
+Pilot-Entity wurde nicht live erzeugt.
 
 Die lokale Konfiguration und Dokumentation liefern nur Kandidaten-Evidence:
 
@@ -252,4 +270,5 @@ Auswertung erhält keine aktuelle Live-Observation.
 - Registry-, Home-Assistant-, Migration-, Deployment-, Release-, Commit- oder
   Push-Änderung: keine.
 
-Issue ha-platform/control#57 bleibt auf status/testing.
+GitHub Issue [#1](https://github.com/Levtos/benni-core-contracts/issues/1)
+bleibt auf `status/testing`.
