@@ -60,7 +60,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_VERSION, "0.1.3")
+        self.assertEqual(RELEASE_VERSION, "0.1.4")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
@@ -68,7 +68,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
     def test_release_documents_and_github_workflow_are_version_consistent(self) -> None:
         release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
-        release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.3.md").read_text(
+        release_notes = (ROOT / "docs" / "release-notes-shadow-0.1.4.md").read_text(
             encoding="utf-8"
         )
         github_workflow = (ROOT / ".github" / "workflows" / "hacs-release.yml").read_text(

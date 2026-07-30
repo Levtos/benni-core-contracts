@@ -1,8 +1,8 @@
 # Implementierungsstatus – GitHub Issue #1
 
-Stand: 2026-07-30, Benni Shadow-only Release `0.1.3`,
-Published Opening Contract v1 lokal implementiert; Live-Aktivierung weiterhin
-ausstehend.
+Stand: 2026-07-31, Benni Shadow-only Release `0.1.4`,
+Published Options-Flow-Fix und Published Opening Contract v1 lokal
+implementiert; Live-Aktivierung weiterhin ausstehend.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die
 laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
@@ -261,7 +261,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 
 ## Benni Shadow-Only Release Candidate v1
 
-- Paketversion: `0.1.3`; Kanal: `shadow_only`; Domain:
+- Paketversion: `0.1.4`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
   das historische `shadow` wird nicht als Default oder Runtime-Modus
@@ -281,7 +281,7 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.1.3`. `zip_release=false` lässt HACS den kanonischen GitHub-
+  `0.1.4`. `zip_release=false` lässt HACS den kanonischen GitHub-
   Repository-Stand verwenden. GitHub Actions ist der einzige aktuelle
   CI-/HACS-Workflow; der lokale grüne Teststand ist der technische Nachweis
   dieser Korrektur. Eine Paketpublikation aktiviert weder ConfigEntry noch
