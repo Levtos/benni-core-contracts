@@ -1,4 +1,4 @@
-# Benni Core Contracts — Shadow-only `0.1.1`
+# Benni Core Contracts — Shadow-only `0.1.3`
 
 `benni_core_contracts` is a new Home Assistant foundation integration built
 around an internal signal graph. This installable stable release is deliberately
@@ -21,7 +21,7 @@ This is the installable Shadow-only release tracked in
 [GitHub issue #1](https://github.com/Levtos/benni-core-contracts/issues/1),
 with the first live-testable Svelte UX.
 The canonical repository and HACS source is
-`Levtos/benni-core-contracts`; the release tag is `v0.1.1`. Installation
+`Levtos/benni-core-contracts`; the release tag is `v0.1.3`. Installation
 is a package distribution step only: it does not activate a ConfigEntry, create
 entities, alter a registry, or constitute live approval. The UX becomes
 available as a read-only Home Assistant sidebar panel after the integration is
@@ -48,7 +48,7 @@ The Shadow-only release scope and boundaries are in
 The separate installation procedure is in
 [installation-shadow-only.md](docs/installation-shadow-only.md). Release
 details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
-notes are in [release-notes-shadow-0.1.1.md](docs/release-notes-shadow-0.1.1.md).
+notes are in [release-notes-shadow-0.1.3.md](docs/release-notes-shadow-0.1.3.md).
 
 The first explicit Published pilot is specified in
 [published-opening-contract-v1.md](docs/published-opening-contract-v1.md).

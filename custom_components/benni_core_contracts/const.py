@@ -7,7 +7,7 @@ CONFIG_SCHEMA_VERSION = 1
 STORAGE_SCHEMA_VERSION = 2
 GATE_PACK_VERSION = 1
 WEBSOCKET_PAYLOAD_VERSION = 1
-RELEASE_VERSION = "0.1.1"
+RELEASE_VERSION = "0.1.3"
 RELEASE_CHANNEL = "shadow_only"
 
 # A missing mode is intentionally invalid; it must never silently become
