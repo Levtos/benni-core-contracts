@@ -1,14 +1,14 @@
-# Implementierungsstatus – control#57
+# Implementierungsstatus – GitHub Issue #1
 
-Stand: 2026-07-28, Benni Shadow-only Release `0.1.1`,
-UX-Release-Gate in technischer Bereitstellung.
+Stand: 2026-07-30, Benni Shadow-only Release `0.1.1`,
+Published Opening Contract v1 lokal implementiert; Live-Aktivierung weiterhin
+ausstehend.
 
-Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die im
-vorherigen Source-Binding-Gate dokumentierten
-read-only HA-State-/Domain-Snapshots bleiben historische Evidence. Die
-aktuelle Probe erreichte das Einhornzentrale-Frontend, aber die read-only
-State-API antwortete ohne bereitgestellte Authentifizierung mit HTTP 401.
-Es wurde keine neue Live-/Registry-Evidence erfunden oder geschrieben.
+Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die
+laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
+geladen, die MQTT-Rohquellen für den Küchen-Terrassentür-Pilot sind vorhanden,
+aber der aktuelle ConfigEntry bleibt Shadow-only. Es wurde keine Live-
+ConfigEntry, Registry oder Home-Assistant-Datei verändert.
 
 ## Geänderte Dateien
 
@@ -16,7 +16,8 @@ Neu im Repository `core-contracts`:
 
 - Grundstruktur: `README.md`, `pyproject.toml`, `hacs.json`, `manifest.json`.
 - HA-Adapter: `__init__.py`, `config_flow.py`, `websocket_api.py`,
-  `source_listener.py`, `strings.json`, `translations/de.json`.
+  `source_listener.py`, `published.py`, `sensor.py`, `strings.json`,
+  `translations/de.json`.
 - Domain: `const.py`, `quality.py`, `models.py`, `schema.py`, `contracts.py`,
   `diagnostics.py`, `graph.py`, `storage.py`, `config_io.py`, `profiles.py`,
   `shadow.py`, `evidence_gate.py`, `source_binding_evidence.py`,
@@ -26,11 +27,15 @@ Neu im Repository `core-contracts`:
   `docs/source-binding-matrix-v1.md`, `docs/benni-owner-required-field-gate-v1.md`,
   `docs/benni-shadow-contract-verification-v1.md`,
   `docs/benni-live-evidence-acquisition-v1.md`,
+  `docs/published-opening-contract-v1.md`,
   `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
   `docs/release-notes-shadow-0.1.0-alpha.1.md`, `docs/ux-contract.md`,
-  `.gitlab-ci.yml`, `.github/workflows/hacs-release.yml`, `docs/ux-implementation.md`,
+  `.github/workflows/hacs-release.yml`, `docs/ux-implementation.md`,
   `docs/ux-frontend-standard.md` und dieses Dokument.
+- Die Repository-Gateprüfung in `scripts/validate_repository.py` erlaubt
+  ausschließlich die explizite `sensor.py`-Pilotplattform und prüft weiterhin
+  Shadow-0-Entity-, Service-, Actuation- und Policy-Grenzen.
 - UX: `frontend/` mit Svelte 5/Vite, Graphite-Dark-Tokenlayer, separater
   App-Shell/Basiskomponenten-Schicht, Core-Contracts-Transportadapter und
   vier read-only Ansichten. Das Build-Artefakt liegt unter
@@ -48,6 +53,9 @@ Neu im Repository `core-contracts`:
 - Der Shadow-Only-Release-Candidate-Gate nutzt
   `tests/test_shadow_only_release_candidate.py` für Modus-, ConfigEntry-,
   Paket- und 0-Entity-Boundaries.
+- Der Published-Opening-Pilot wird durch `tests/test_published_opening_contract.py`
+  gegen Zustandsmapping, Freshness, Konflikt-/Fallback-Semantik, Allowlist,
+  Shadow-Grenze und Sensor-Plattform-Forwarding geprüft.
 
 ## Implementierte Modelle
 
@@ -73,6 +81,12 @@ Neu im Repository `core-contracts`:
   diagnostiziert; `SafetyStatus.UNSAFE` trennt Safety-Verbrauchbarkeit vom
   fachlichen `ValueState`.
 - `EntityProjectionGate` mit exakter Allowlist und hartem Shadow-Block.
+- `PublishedRuntime` und der einzige explizite Pilot
+  `benni.opening.kitchen_patio_door`; seine beiden Rohquellen sind nur die
+  aktuell read-only verifizierten Küchen-Terrassentür-Kontakte.
+- `sensor.benni_opening_kitchen_patio_door` als einzige mögliche Entity-
+  Projektion. Interne Signale, Fusionen und Diagnosen bleiben außerhalb der
+  Entity-Plattform.
 - Gemeinsame Profile `benni`/`eltern` ohne getrennte Graphlogik.
 - Read-only WS-Payload-Version 1 mit fünf getrennten Befehlen,
   stabilen Objekt-IDs, Graph-Revision und revision-basierter Delta-
@@ -109,20 +123,22 @@ Neu im Repository `core-contracts`:
 Die Registry enthält `room_climate.v1`, `opening.v1`,
 `weather_environment.v1` und `technical_device.v1`. Sie besitzen keine
 historischen Device-/Combined-/Master-Basisklassen und keine automatische
-Entity-Projektion.
+Entity-Projektion. Nur der explizite Benni-Opening-Pilot darf über die
+Published-Allowlist eine Entity-Projektion anfordern.
 
 ## Tests
 
-Die Tests sind als stdlib-only `unittest`-Suite angelegt. Ausgeführt wurden
-Syntaxkompilierung und 122 Unit-/Architekturtests:
+Die Tests sind als stdlib-only `unittest`-Suite angelegt. Für den aktuellen
+Branch werden Syntaxkompilierung und 137 Unit-/Architekturtests ausgeführt:
 
 ```text
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-Ergebnis: **122 Tests grün**; `python -m compileall -q custom_components tests`
-war ebenfalls erfolgreich. **4 JSON-Dateien**, **1 TOML-Datei** und **57
-Textdateien** wurden ohne Syntax- bzw. Whitespace-Befund geprüft. Der
+Ergebnis: **137 Tests grün**; `python -m compileall -q custom_components tests`
+war ebenfalls erfolgreich. Die Repository-Validierung prüfte **7 JSON-Dateien**,
+**1 TOML-Datei** und **80 Textdateien** ohne Syntax- bzw. Whitespace-Befund.
+Der
 vollständige Feld-/Fixture-/Boundary-Audit ist in
 `docs/source-binding-evidence-gate-v1.md` und
 `docs/source-binding-matrix-v1.md` sowie
@@ -138,16 +154,17 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   tatsächlich als aktuelle SourceBinding beobachtet werden?
 - Welche Quellen benötigen künftig `device_timestamp_required` statt der v1-
   Regel `device_or_ha_event`?
-- Soll ein späterer Published-Modus nur einzelne Contract-Entities oder
-  bewusst aggregierte Projektionen zulassen?
+- Soll der einzelne Published-Pilot nach der separaten Benni-Live-Prüfung
+  fachlich bestätigt werden, oder bleibt er zunächst ein technischer Pilot?
 - Welche WS-Payload-Grenzen und Auth-/Admin-Berechtigungsdetails gelten für
   spätere Config-Schreibbefehle und eine künftige Umbrella UX?
 - Welche produktiven SourceBindings lassen sich für die synthetischen
   Contract-Evidence-Fixtures tatsächlich belegen?
 - Wie werden die festgelegten Required-Felder und Safety-Evidence fachlich
   durch die Owner bestätigt?
-- Welche aktuelle read-only Live-Evidence darf im nächsten separaten Schritt
-  dem Shadow-Report vorgelegt werden, ohne eine SourceBinding zu aktivieren?
+- Welches echte State-Change-Event und welche nicht-retained Freshness-Evidence
+  kann nach der ausdrücklichen Published-ConfigEntry-Aktivierung beobachtet
+  werden?
 
 ## Evidenzlücken
 
@@ -220,14 +237,18 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 - Die Frontend-Probe gegen Einhornzentrale (192.168.178.106:8123) war
   erreichbar (HTTP 200); /api/, /api/states und /api/config antworteten ohne
   Authentifizierung mit HTTP 401.
-- Es wurde kein Token, Cookie oder Live-Connector verwendet. Aktuelle
-  Entity-States, last_changed, last_updated, Gerätezeitstempel,
-  Event-Herkunft, retained/restore/stale und Source-Ownership bleiben OPEN.
-- Lokale import.yaml- und Dokumentationsreferenzen sind KONFIGURIERT oder
-  DOKUMENTIERT, aber keine aktuelle Live-Evidence. Die Source-Binding-Matrix
-  v1 wurde nicht mit neuen LIVE_VERIFIZIERT-Einträgen ergänzt.
-- Room Climate (living, kitchen, bathroom), Opening, Weather/Environment und
-  Technical Device bleiben ohne aktuelle Snapshots im Required-Gate blocked.
+- Es wurde kein Token oder Cookie gespeichert. Ein autorisierter read-only
+  HA-MCP-Zugriff revalidierte danach die beiden konkreten Opening-Pilot-
+  Entities samt MQTT-Ownership, State und HA-Zeitstempeln. Ein Gerätezeit-
+  stempel und ein expliziter Retained-Marker bleiben OPEN.
+- Lokale import.yaml- und Dokumentationsreferenzen bleiben KONFIGURIERT oder
+  DOKUMENTIERT. Die Source-Binding-Matrix v1 enthält für den Pilot ein
+  dokumentiertes 30.07.2026-Revalidierungs-Overlay; daraus folgt keine
+  ConfigEntry-Aktivierung.
+- Room Climate, Weather/Environment und Technical Device bleiben ohne
+  vollständige aktuelle Required-Evidence im Gate blocked. Der Opening-Pilot
+  hat belegte Quellen, bleibt aber bis zum echten nicht-retained State-Change-
+  Event für einen Freshness-/Published-Lauf offen.
 - Lock bleibt Evidence-only/conflict mit der kanonischen Kandidaten-ID
   lock.flur_aqara_smart_lock_u200. Die historische
   lock.aqara_smart_lock_u200 bleibt unzulässige historische Evidence. Cover-
@@ -243,8 +264,9 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 - Paketversion: `0.1.1`; Kanal: `shadow_only`; Domain:
   `benni_core_contracts`.
 - Der ConfigEntry-Modus muss explizit `shadow_only` sein. Ein fehlender Modus,
-  das historische `shadow` und `published` werden nicht als Default oder
-  Runtime-Modus akzeptiert.
+  das historische `shadow` wird nicht als Default oder Runtime-Modus
+  akzeptiert. `published` ist ein separater, explizit eingegrenzter Pilot und
+  kein Default.
 - Der ConfigEntry-Flow bietet ausschließlich `profile=benni` an. Eltern bleibt
   `parent_future`/`out_of_scope`; gemeinsamer Graph-/Fixture-Code wird nicht
   in einen zweiten Eltern-Logikbaum aufgeteilt.
@@ -252,17 +274,18 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   Entity-Allowlist. Matrix-/Fixture-Evidence wird nicht automatisch zur
   produktiven Konfiguration.
 - `async_setup` ohne ConfigEntry sowie ein leerer `shadow_only`-ConfigEntry
-  laden keine Entity-Plattform und erzeugen 0 Entities. `ShadowRuntime` und
-  `EntityProjectionGate` haben im RC keinen Published-Pfad.
+  laden keine Entity-Plattform und erzeugen 0 Entities. `ShadowRuntime` bleibt
+  vollständig entity-frei; nur `PublishedRuntime` darf die exakt allowlistete
+  Pilot-Entity über die `sensor`-Plattform weiterleiten.
 - Der Listener bleibt read-only und verarbeitet nur explizit konfigurierte
   States. Services, Actuation, Registry-/Consumer-Änderungen und Policy-
   Imports bleiben außerhalb des Pakets.
 - `manifest.json`, `pyproject.toml` und HACS-Metadaten verwenden konsistent
-  `0.1.1`. `zip_release=false` lässt HACS den synchronisierten
-  Repository-Stand verwenden. Die GitLab-Pipeline ist für dieses Repository
-  kein Merge-, Release- oder Abnahme-Gate; der lokale grüne Teststand ist der
-  technische Nachweis. Der bestehende Mirror-/HACS-Weg veröffentlicht den
-  GitHub-Stable-Release.
+  `0.1.1`. `zip_release=false` lässt HACS den kanonischen GitHub-
+  Repository-Stand verwenden. GitHub Actions ist der einzige aktuelle
+  CI-/HACS-Workflow; der lokale grüne Teststand ist der technische Nachweis
+  dieser Korrektur. Eine Paketpublikation aktiviert weder ConfigEntry noch
+  PublishedContract.
 - Eine Installation darf nur auf Benni/Einhornzentrale und nach separater
   read-only Freigabe erfolgen. Nach technischer Bereitstellung bleibt die
   Issue-Abnahme auf `testing`, bis Benni die reale UX in HA bestätigt.
@@ -278,25 +301,28 @@ Aktueller reproduzierbarer Teststand:
 
 ```text
 python -m unittest discover -s tests -p "test_*.py" -v
-Ran 124 tests ... OK
+Ran 137 tests ... OK
 ```
 
-Live-Evidence bleibt wegen HTTP 401 des autorisierten State-API-Zugriffs
-offen; der Paket-Release schließt dieses Gate nicht.
+Die read-only Live-Evidence für die beiden Pilotquellen ist vorhanden, aber
+ohne Gerätezeitstempel und ohne expliziten Retained-Nachweis. Der aktuelle
+Shadow-ConfigEntry wird deshalb nicht automatisch in den Published-Modus
+überführt; das nachgelagerte Live-Event-/Freshness-Gate bleibt offen.
 
-Die GitLab-CI-Suite verwendet den dedizierten, projektgebundenen Docker-Runner
-`core-contracts-ci` (Runner 2) in LXC 122. Der Runner führt keine ungetaggten
-Jobs aus, ist auf 15 Minuten begrenzt und ist in
-[`ci-runner-core-contracts.md`](ci-runner-core-contracts.md) dokumentiert.
+Die frühere Runner-Dokumentation ist historische Provenienz und kein aktiver
+CI-Pfad. Für diese Korrektur wurde ausschließlich die lokale Suite ausgeführt;
+GitHub bleibt der aktuelle Workflow- und Dokumentationspfad.
 
 ## HA-Entities
 
-Erzeugt: **0**.
+Im aktuellen laufenden Shadow-ConfigEntry erzeugt: **0**.
 
-Der Slice lädt keine HA-Entity-Plattform, registriert keine Sensoren oder
-Binary Sensors und verwendet im `shadow_only`-Modus eine leere öffentliche
-Projektionsmenge. WebSocket-Antworten und Evidence-Gate-Ergebnisse sind keine
-HA-Entities. Es gibt keine Policy-Imports und keine Service-/Actuation-Pfade.
+Der `shadow_only`-Slice lädt keine HA-Entity-Plattform und verwendet eine
+leere öffentliche Projektionsmenge. Der lokale Published-Testpfad erzeugt
+genau eine mögliche `sensor.benni_opening_kitchen_patio_door` nur für einen
+expliziten `PublishedRuntime`; das ist keine Live-Aktivierung. WebSocket-
+Antworten und Evidence-Gate-Ergebnisse sind keine HA-Entities. Es gibt keine
+Policy-Imports und keine Service-/Actuation-Pfade.
 
 ## Contract Evidence Gate
 
@@ -314,6 +340,34 @@ Opening-Felder haben keinen Safe Default, geben bei fehlender Evidence
 Safe-Default-Aussage in den Dokumenten wurde entfernt; die gemeinsame
 `physical_state`-Schema-Invariante verhindert dieselbe Lücke in neuen Feldern.
 
+## Benni Published Opening Contract v1
+
+- Der erste vertikale Published-Schnitt ist
+  `benni.opening.kitchen_patio_door` auf Basis von `opening.v1`.
+- Die read-only Quellen sind
+  `binary_sensor.kitchen_patio_door_open_contact` und
+  `binary_sensor.kitchen_patio_door_tilt_contact`, beide aus der MQTT-
+  Integration. Ihre IDs wurden read-only in Einhornzentrale beobachtet; sie
+  sind keine automatisch aktivierten ConfigEntry-Bindings.
+- `off/off`, `off/on` und `on/off` werden zu `closed`, `tilted` und `open`;
+  `on/on`, fehlende, initiale, stale, retained oder restaurierte Evidence wird
+  für physische Felder zu `unknown`. Die physische Opening-Fallback-Kette
+  bleibt `reject`.
+- Source-Konflikte führen zusätzlich dazu, dass `available=false` nur als
+  konservative technische Gate-Aussage ausgegeben wird; sie lassen den
+  Required-Evidence-Gate nicht bestehen.
+- Die einzige mögliche Entity ist
+  `sensor.benni_opening_kitchen_patio_door`. Die Entity-Allowlist ist exakt;
+  Rohquellen, AtomicSignals, Fusionen, Fallbacks und Diagnosen werden nicht
+  projiziert.
+- Im aktuellen HA-Stand ist der ConfigEntry weiterhin Shadow-only und die
+  Entity daher live nicht vorhanden. Eine Benni-seitige Published-
+  ConfigEntry-Auswahl und der normale Reload/Restart sind für die echte
+  Entity-/Event-Prüfung noch erforderlich.
+- Eltern bleibt vollständig `parent_future`/`out_of_scope`; Lock, Cover-
+  Position, andere Contracts und alle Consumer bleiben außerhalb dieses
+  Gates.
+
 ## Abgrenzung zu control#56 / Notes 488–489
 
 Note 488 ist als Feld-/Capability-Diagnose umgesetzt: Root Cause, Quelle,
@@ -325,10 +379,12 @@ Lücke: Restore, retained MQTT, Gerätezeit und HA-Zeit werden nicht vermischt.
 
 ## Repository publication
 
-Das Repository ist als privates GitLab-Projekt unter
-`ha-platform/core-contracts` angelegt. Der synchronisierte `main`-Stand vor
-diesem Release-Gate ist `b8074e73c8bf6d144efef6835586750d92d8d273`; der
-GitHub-Mirror ist `Levtos/benni-core-contracts`. Der Release-Tag wird erst
-nach grüner lokaler Suite auf den Release-Commit gesetzt. Diese Publikation
-ändert weder Home Assistant, Registry, Deployment noch Consumer; die
-fachlichen und Live-Gates bleiben offen.
+Das kanonische Repository ist
+[`Levtos/benni-core-contracts`](https://github.com/Levtos/benni-core-contracts),
+das korrespondierende Arbeits-Issue ist
+[`#1`](https://github.com/Levtos/benni-core-contracts/issues/1). Der vor dieser
+Korrektur beobachtete GitHub-`main`-Stand war
+`501660ba3a7698db5a0729c4eb896c85eb31f287`; der Published-Opening-Slice wird
+über den GitHub-PR-Workflow bereitgestellt. Diese Publikation ändert weder
+Home Assistant, Registry, Deployment noch Consumer; die fachlichen und
+Live-Gates bleiben offen.

@@ -1,8 +1,8 @@
 # Source Binding Evidence Matrix v1
 
-Stand: 2026-07-23. Diese Matrix ist ein Evidence-Artefakt für
-ha-platform/control#57. Sie ist keine produktive ConfigEntry und autorisiert
-keine Bindung.
+Stand: 2026-07-30. Diese Matrix ist ein Evidence-Artefakt für
+[GitHub Issue #1](https://github.com/Levtos/benni-core-contracts/issues/1).
+Sie ist keine produktive ConfigEntry und autorisiert keine Bindung.
 
 Die kanonische, maschinenlesbare Matrix wird durch
 source_binding_matrix_v1() in
@@ -19,11 +19,14 @@ historical_source_entity und production_binding_allowed=false.
 bleiben mit `parent_future_records()` für gemeinsame Fixtures und
 Graph-Evidence sichtbar, aber vollständig `out_of_scope`.
 
-Die im Matrixfeld `LIVE_VERIFIZIERT` dokumentierten Snapshots stammen aus dem
-vorherigen Source-Binding-Evidence-Gate. Im nachfolgenden Benni Shadow Contract
-Verification Gate lag keine neue Registry-/Live-Abfrage vor. Sie dürfen daher
-nicht als aktuelle Freshness-, Ownership- oder Aktivierungs-Evidence gelesen
-werden; die jeweilige Revalidierung bleibt `OPEN`.
+Die meisten im Matrixfeld `LIVE_VERIFIZIERT` dokumentierten Snapshots stammen
+aus dem vorherigen Source-Binding-Evidence-Gate. Für den ersten Published-
+Pilot wurde am 30.07.2026 eine neue read-only Revalidierung der beiden
+Küchen-Terrassentür-Kontakte durchgeführt. Sie belegt Entity, Domain,
+MQTT-Ownership und beobachtbare HA-State-Historie, aber keinen
+Gerätezeitstempel und keinen expliziten Retained-Marker. Sie autorisiert keine
+ConfigEntry-Aktivierung; Freshness entsteht erst aus einem echten, nicht-
+retained State-Change-Event.
 
 ## Spaltenkonventionen
 
@@ -70,6 +73,7 @@ unknown; kein Datensatz verwendet einen Safe Default.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Benni / living | opening_state: open + tilt contacts | binary_sensor.living_window_left_open_contact; binary_sensor.living_window_left_tilt_contact; binary_sensor.living_window_right_open_contact; binary_sensor.living_window_right_tilt_contact | ja | device oder echtes HA-Event / false / true / unbekannt | state / reject | Contact/Freshness/Conflict / consumer-critical / climate, blind, safety | LIVE_VERIFIZIERT / candidate | Gerätezeitstempel und Replay-Erkennung bestätigen |
 | Benni / kitchen, hall | opening_state: door contacts | binary_sensor.kitchen_patio_door_open_contact; binary_sensor.kitchen_patio_door_tilt_contact; binary_sensor.hall_entry_door_contact | ja | device oder echtes HA-Event / false / true / unbekannt | state / reject | Contact/Freshness/Conflict / consumer-critical / climate, blind, safety | LIVE_VERIFIZIERT / candidate | vollständige Aggregatmenge und Gerätezeit prüfen |
+| Benni / kitchen patio pilot | `open_contact` + `tilt_contact` für den ersten Published-Pilot | binary_sensor.kitchen_patio_door_open_contact; binary_sensor.kitchen_patio_door_tilt_contact | ja | device oder echtes nicht-retained HA-Event / false / true / unbekannt | state / reject | MQTT-Kontakt, Freshness und Konflikt bleiben feldbezogen / consumer-critical / climate, blind, safety | LIVE_VERIFIZIERT / candidate | Gerätezeitstempel und Event-/Retained-Herkunft im späteren Published-Lauf bestätigen |
 | Benni / alle | is_open / projection; available / gate; source_count / diagnostic | keine eigene Entity | gemäß Schema | aus Rohfeld-Evidence / null / null / null | interne Projektion / reject für physische Projektion, safe_default=false nur für Availability | Feldfehler bleiben feldbezogen / Safety getrennt / Safety- und Diagnoseconsumer | IMPLEMENTIERT / derived | Aggregatdefinition und Diagnosezählung bestätigen |
 | Eltern / kitchen, living, bathroom | opening_state: raw contact | binary_sensor.kitchen_window_left_contact; binary_sensor.kitchen_window_right_contact; binary_sensor.living_room_patio_door_contact; binary_sensor.bathroom_window_right_contact | ja | device oder echtes HA-Event / false / true / true | state / reject | Z2M Contact, retained möglich / consumer-critical / climate, blind, safety | LIVE_VERIFIZIERT / candidate | non-retained MQTT-State-Event pro Kontakt belegen |
 | Eltern / alle | is_open / projection; available / gate; source_count / diagnostic | keine eigene Entity | gemäß Schema | aus Rohfeld-Evidence / null / null / null | interne Projektion / reject für physische Projektion, safe_default=false nur für Availability | Feldfehler bleiben feldbezogen / Safety getrennt / Safety- und Diagnoseconsumer | IMPLEMENTIERT / derived | vollständige Eltern-Kontaktmenge bestätigen |
@@ -140,30 +144,28 @@ Eine konfigurierte Entity ist nicht automatisch live verifiziert. Ein
 Live-State ist nicht automatisch ein Gerätezeitstempel. Eine Batterie
 begründet niemals Freshness.
 
-## Acquisition-Gate-v1-Overlay (2026-07-23)
+## Acquisition-Gate-v1-Overlay (2026-07-30)
 
-Die kanonische Matrix und ihre Version 1 bleiben unverändert. Dieses
-Acquisition-Gate hat keine Matrix-Evidence hochgestuft und keine neue
-SourceBinding eingetragen. Die in dieser Datei vorhandenen
-LIVE_VERIFIZIERT-Einträge sind historische Snapshots des vorherigen
-Source-Binding-Gates; sie sind kein aktueller State-, Ownership- oder
-Freshness-Nachweis dieses Laufs.
+Die kanonische Matrix und ihre Version 1 bleiben unverändert. Das Overlay
+aktualisiert nur die Evidence-Dokumentation; es trägt keine SourceBinding in
+eine ConfigEntry ein und setzt keine Aktivierungsberechtigung.
 
-Die neue read-only Probe gegen die Einhornzentrale ergab:
+Die read-only Revalidierung gegen die Einhornzentrale ergab für den
+Published-Pilot:
 
 | Probe | Ergebnis |
 | --- | --- |
-| Frontend / | HTTP 200 |
-| /api/, /api/states, /api/config | HTTP 401 |
-| aktuelle Entity-States | nicht gelesen |
-| Gerätezeitstempel, Event-Herkunft, retained/restore | nicht ermittelt |
-| Registry-/Ownership-Revalidierung | OPEN |
+| Integration `benni_core_contracts` | geladen; bestehender ConfigEntry bleibt Shadow-only |
+| `binary_sensor.kitchen_patio_door_open_contact` | `off`; MQTT; `last_changed`/`last_updated` 2026-07-29 10:19:41.133066+02:00 |
+| `binary_sensor.kitchen_patio_door_tilt_contact` | `on`; MQTT; `last_changed`/`last_updated` 2026-07-30 12:40:38.252564+02:00 |
+| Source-Ownership | MQTT-ConfigEntry der read-only beobachteten Quelle |
+| Gerätezeitstempel | nicht vorhanden / nicht ermittelt |
+| retained-/restore-Marker | kein expliziter Marker im Entity-State ermittelt; Retained bleibt als Risiko blockierend |
+| State-Historie | echte HA-State-Übergänge beobachtbar; Setup-Snapshot selbst ist nicht fresh |
+| Pilot-Entity | aktuell nicht vorhanden, weil keine Published-ConfigEntry aktiviert wurde |
 
-Lokale Import- und Dokumentationsreferenzen bleiben KONFIGURIERT oder
-DOKUMENTIERT. Für die aktuelle Acquisition gelten die konkreten Benni-Quellen
-als OFFEN, bis ein minimierter, authentifizierter read-only Snapshot mit
-State, relevanten Attributen, Availability, last_changed, last_updated,
-Gerätezeitpfad, Event-Herkunft, retained-/restore-Markierung und
-Source-Ownership vorliegt. Die alte Lock-ID bleibt ausschließlich
-historical_source_entity; die kanonische Kandidaten-ID wird nicht aus der
+Die Pilotquellen sind damit für die technische Published-Konfiguration
+konkret belegt, aber der erste Live-Contract-State bleibt bis zum echten,
+nicht-retained State-Change-Event offen. Die alte Lock-ID bleibt ausschließlich
+`historical_source_entity`; die kanonische Kandidaten-ID wird nicht aus der
 alten ID repariert.

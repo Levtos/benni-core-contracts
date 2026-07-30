@@ -308,7 +308,7 @@ class OwnerRequiredFieldGateTests(unittest.TestCase):
         package = __import__(
             "pathlib"
         ).Path(__file__).resolve().parents[1] / "custom_components" / "benni_core_contracts"
-        self.assertFalse((package / "sensor.py").exists())
+        self.assertTrue((package / "sensor.py").exists())
         self.assertFalse((package / "binary_sensor.py").exists())
         self.assertFalse(gate.activation_allowed)
         self.assertFalse(any(record.production_binding_allowed for record in gate.matrix.records))

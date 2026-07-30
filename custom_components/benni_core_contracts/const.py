@@ -10,10 +10,11 @@ WEBSOCKET_PAYLOAD_VERSION = 1
 RELEASE_VERSION = "0.1.1"
 RELEASE_CHANNEL = "shadow_only"
 
-# The only selectable/activatable mode in this release candidate.  A missing
-# mode is intentionally invalid; it must never silently become shadow-only.
+# A missing mode is intentionally invalid; it must never silently become
+# shadow-only. ``published`` is a separately gated, explicit pilot mode.
 MODE_SHADOW_ONLY = "shadow_only"
-SUPPORTED_MODES = (MODE_SHADOW_ONLY,)
+MODE_PUBLISHED = "published"
+SUPPORTED_MODES = (MODE_SHADOW_ONLY, MODE_PUBLISHED)
 
 PROFILE_BENNI = "benni"
 PROFILE_ELTERN = "eltern"
@@ -50,3 +51,26 @@ CONF_PROFILE = "profile"
 CONF_MODE = "mode"
 CONF_ENTITY_ALLOWLIST = "entity_allowlist"
 CONF_BINDINGS = "bindings"
+CONF_PUBLISHED_CONTRACTS = "published_contracts"
+
+# The first public projection is deliberately a single, named pilot.  These
+# IDs are contract/configuration IDs, not raw-source IDs.  Raw source IDs must
+# still be supplied explicitly as SourceBindings in the ConfigEntry.
+PILOT_OPENING_CONTRACT_ID = "benni.opening.kitchen_patio_door"
+PILOT_OPENING_ENTITY_ID = "sensor.benni_opening_kitchen_patio_door"
+PILOT_OPENING_BINDING_OPEN = "benni.opening.kitchen_patio_door.open_contact"
+PILOT_OPENING_BINDING_TILT = "benni.opening.kitchen_patio_door.tilt_contact"
+PILOT_OPENING_BINDING_IDS = (
+    PILOT_OPENING_BINDING_OPEN,
+    PILOT_OPENING_BINDING_TILT,
+)
+PILOT_OPENING_OPEN_SOURCE_ENTITY_ID = (
+    "binary_sensor.kitchen_patio_door_open_contact"
+)
+PILOT_OPENING_TILT_SOURCE_ENTITY_ID = (
+    "binary_sensor.kitchen_patio_door_tilt_contact"
+)
+PILOT_OPENING_SOURCE_ENTITY_IDS = (
+    PILOT_OPENING_OPEN_SOURCE_ENTITY_ID,
+    PILOT_OPENING_TILT_SOURCE_ENTITY_ID,
+)

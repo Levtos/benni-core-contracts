@@ -23,8 +23,13 @@ PublishedContract (versioned internal result)
         +--> DiagnosticProjection (field/capability/root cause)
 ```
 
-Es gibt im ersten Slice keine Entity-Plattform-Weiterleitung, keine
-Service-Calls, keine Aktuation und keine Policy-Auswertung.
+Im `shadow_only`-Modus gibt es keine Entity-Plattform-Weiterleitung, keine
+Service-Calls, keine Aktuation und keine Policy-Auswertung. Der aktuelle
+Architekturstand enthält zusätzlich einen separat validierten Published-
+Pilotpfad: Nur `opening.v1` für die Benni-Küchen-Terrassentür darf bei einer
+expliziten ConfigEntry-Allowlist die `sensor`-Plattform weiterleiten. Dieser
+Pfad bleibt außerhalb des Shadow-Defaults und veröffentlicht keine internen
+Graphobjekte.
 
 Der HA-Adapter liest für konfigurierte Bindings initiale Zustände und reine
 State-Change-Events. Initiale Zustände erhalten keine Beobachtungs-Freshness;
@@ -130,9 +135,13 @@ außerhalb dieses Repositories.
 ## ConfigEntry und Storage
 
 Die ConfigEntry trägt `ConfigModel` Version 1: Profil, Modus, exakte
-Allowlist und SourceBindings. Der Flow verlangt explizit `mode=shadow_only`;
-ein fehlender Modus und `published` werden abgewiesen. Im aktuellen RC bleibt
-die Allowlist leer und die ConfigEntry ist die einzige Konfigurationsquelle.
+Allowlist, freigegebene Contract-IDs und SourceBindings. Der Flow verlangt
+immer einen expliziten Modus. `shadow_only` ist der sichere Default ohne
+Allowlist und ohne Bindings. `published` ist nur für Benni, exakt
+`benni.opening.kitchen_patio_door`, exakt
+`sensor.benni_opening_kitchen_patio_door` und genau die zwei read-only
+verifizierten Küchen-Terrassentür-Quellen zulässig. Es gibt keinen impliziten
+Published-Modus und keine automatische Binding-Übernahme.
 
 Der HA-Store hat Version 2. Er speichert ausschließlich Runtime-Signale,
 Restore-Marker sowie Diagnose-/Shadow-Daten. Konfigurationsdaten im Store
@@ -141,15 +150,22 @@ aktuell verwendet; der Graph erzeugt neue `restore`-Evidence.
 
 ## Entity-Grenze
 
-Die einzige Projektionsstelle ist `EntityProjectionGate`. Im aktuellen
-`shadow_only`-RC liefert sie immer eine leere Menge; es gibt keinen
-aktivierbaren Published-Pfad. Es gibt keine implizite Entity für:
+Die einzige Projektionsstelle ist `EntityProjectionGate`. Im
+`shadow_only`-Modus liefert sie immer eine leere Menge. Im expliziten
+Published-Pilot akzeptiert sie ausschließlich die konkrete Allowlist-Entity;
+der Sensor-Adapter wird nur für diesen ConfigEntry-Modus weitergeleitet. Es
+gibt keine implizite Entity für:
 
 - eine Rohquelle,
 - einen Fallback,
 - eine Fusion,
 - ein Diagnosefeld,
 - einen Policy-Zwischenwert.
+
+Der erste konkrete Published-Pilot ist in
+[Published Opening Contract v1](published-opening-contract-v1.md)
+dokumentiert. Lock, Cover-Position, alle anderen Contract-Typen, Eltern,
+Consumer-Cutovers und Policies bleiben außerhalb der Veröffentlichung.
 
 ## Contract-Versionen
 

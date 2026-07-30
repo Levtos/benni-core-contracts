@@ -3,10 +3,35 @@
     "step": {
       "user": {
         "title": "Core Contracts",
-        "description": "Der Benni-Release-Kandidat läuft ausschließlich read-only im Modus shadow_only.",
+        "description": "Die Benni-Core-Contracts-Integration ist read-only. Shadow-only ist der sichere Standard; der Published-Modus benötigt eine ausdrückliche Quellenauswahl für den Pilot.",
         "data": {
           "profile": "Profil",
-          "mode": "Modus (muss shadow_only sein)"
+          "mode": "Modus"
+        }
+      },
+      "published": {
+        "title": "Opening-Pilot veröffentlichen",
+        "description": "Wähle die beiden Rohkontakt-Entities für den Benni-Pilot der Küchen-Terrassentür ausdrücklich aus. Kein anderer Contract wird veröffentlicht.",
+        "data": {
+          "opening_open_source": "Öffnungskontakt",
+          "opening_tilt_source": "Kippkontakt"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Core-Contracts-Optionen",
+        "data": {
+          "mode": "Modus"
+        }
+      },
+      "published": {
+        "title": "Opening-Pilot veröffentlichen",
+        "data": {
+          "opening_open_source": "Öffnungskontakt",
+          "opening_tilt_source": "Kippkontakt"
         }
       }
     }

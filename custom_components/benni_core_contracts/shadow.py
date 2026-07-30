@@ -1,4 +1,4 @@
-"""Shadow runtime and explicit public-entity boundary."""
+"""Runtime modes and the single explicit public-entity boundary."""
 
 from __future__ import annotations
 
@@ -28,28 +28,47 @@ class EntityAllowlist:
 
 
 class EntityProjectionGate:
-    """One explicit gate for any future public entity projection."""
+    """One explicit gate for public entities.
+
+    Shadow mode always returns an empty projection. Published mode still
+    requires an exact allowlist match; the gate never discovers or infers
+    entities from raw sources, signals, fusions or diagnostics.
+    """
 
     def __init__(self, mode: RuntimeMode, allowlist: EntityAllowlist) -> None:
-        if mode != RuntimeMode.SHADOW_ONLY:
-            raise ValueError("only shadow_only entity projection is available")
+        if mode not in {RuntimeMode.SHADOW_ONLY, RuntimeMode.PUBLISHED}:
+            raise ValueError("unsupported entity projection mode")
         self.mode = mode
         self.allowlist = allowlist
 
     def projectable(self, candidate_entity_ids: Iterable[str]) -> tuple[str, ...]:
-        return ()
+        if self.mode == RuntimeMode.SHADOW_ONLY:
+            return ()
+        return tuple(
+            entity_id
+            for entity_id in candidate_entity_ids
+            if self.allowlist.allows(entity_id)
+        )
 
 
 class ShadowRuntime:
-    """Runtime facade with no entity platform and no actuation surface."""
+    """Runtime facade with shadow-only defaults and no entity surface."""
 
-    def __init__(self, config: ConfigModel, graph: SignalGraph) -> None:
-        if config.mode != RuntimeMode.SHADOW_ONLY:
+    def __init__(
+        self,
+        config: ConfigModel,
+        graph: SignalGraph,
+        *,
+        _allow_published: bool = False,
+    ) -> None:
+        if config.mode != RuntimeMode.SHADOW_ONLY and not _allow_published:
             raise ValueError("ShadowRuntime requires mode=shadow_only")
         if config.profile != ProfileId.BENNI:
             raise ValueError("parent_future is outside the Benni shadow runtime")
-        if config.entity_allowlist:
+        if config.mode == RuntimeMode.SHADOW_ONLY and config.entity_allowlist:
             raise ValueError("shadow_only runtime cannot carry a public allowlist")
+        if config.mode == RuntimeMode.SHADOW_ONLY and config.published_contracts:
+            raise ValueError("shadow_only runtime cannot carry published contracts")
         self.config = config
         self.graph = graph
         self.entity_gate = EntityProjectionGate(
@@ -170,3 +189,38 @@ class ShadowRuntime:
             ]
             return payload
         raise ValueError(f"unsupported read-only command: {command}")
+
+
+class PublishedRuntime(ShadowRuntime):
+    """Explicit Benni pilot runtime with one allowlisted contract only."""
+
+    def __init__(self, config: ConfigModel, graph: SignalGraph) -> None:
+        if config.mode != RuntimeMode.PUBLISHED:
+            raise ValueError("PublishedRuntime requires mode=published")
+        super().__init__(config, graph, _allow_published=True)
+        if not config.published_contracts:
+            raise ValueError("published runtime requires an explicit contract allowlist")
+        self._contract_update_listeners: list = []
+
+    @property
+    def published_contract_ids(self) -> tuple[str, ...]:
+        return self.config.published_contracts
+
+    def add_contract_update_listener(self, listener) -> None:
+        self._contract_update_listeners.append(listener)
+
+    def remove_contract_update_listener(self, listener) -> None:
+        if listener in self._contract_update_listeners:
+            self._contract_update_listeners.remove(listener)
+
+    def refresh_published_contracts(self) -> None:
+        """Evaluate only explicitly allowlisted pilot contracts."""
+
+        for contract_id in self.published_contract_ids:
+            self.graph.evaluate_contract(contract_id, "opening", schema_version=1)
+        for listener in tuple(self._contract_update_listeners):
+            listener()
+
+    def unload(self) -> None:
+        super().unload()
+        self._contract_update_listeners.clear()

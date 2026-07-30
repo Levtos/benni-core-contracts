@@ -2,10 +2,10 @@
   "domain": "benni_core_contracts",
   "name": "Benni Core Contracts",
   "version": "0.1.1",
-  "documentation": "https://gitlab.b-struck.de/ha-platform/core-contracts",
-  "issue_tracker": "https://gitlab.b-struck.de/ha-platform/control/-/issues/59",
+  "documentation": "https://github.com/Levtos/benni-core-contracts",
+  "issue_tracker": "https://github.com/Levtos/benni-core-contracts/issues/1",
   "codeowners": ["@codex-agent"],
   "config_flow": true,
   "integration_type": "hub",
-  "iot_class": "local_polling"
+  "iot_class": "local_push"
 }

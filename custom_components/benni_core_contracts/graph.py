@@ -128,11 +128,22 @@ class SignalGraph:
             all_by_key[key] = fusion
         self._assert_acyclic(all_by_id)
         for fusion in batch:
-            mismatched_bindings = [
-                binding_id
-                for binding_id in fusion.input_binding_ids
-                if self._bindings[binding_id].field != fusion.field
-            ]
+            if fusion.strategy.startswith("opening_"):
+                # The opening pilot fuses two raw contact fields into one
+                # contract field.  This is the one deliberate domain
+                # normalization exception to the usual same-field rule.
+                allowed_input_fields = {"open_contact", "tilt_contact"}
+                mismatched_bindings = [
+                    binding_id
+                    for binding_id in fusion.input_binding_ids
+                    if self._bindings[binding_id].field not in allowed_input_fields
+                ]
+            else:
+                mismatched_bindings = [
+                    binding_id
+                    for binding_id in fusion.input_binding_ids
+                    if self._bindings[binding_id].field != fusion.field
+                ]
             if mismatched_bindings:
                 raise GraphError(
                     f"fusion {fusion.fusion_id} references a different field: "
@@ -481,6 +492,13 @@ class SignalGraph:
     ) -> _FusionSelection:
         candidate_ids = tuple(signal.binding_id for signal in candidates)
         strategy = fusion.strategy if fusion else "none"
+        if fusion is not None and strategy.startswith("opening_"):
+            return SignalGraph._select_opening_contacts(
+                fusion,
+                candidates,
+                field_schema,
+                now,
+            )
         fresh_valid = tuple(
             signal
             for signal in candidates
@@ -596,6 +614,163 @@ class SignalGraph:
             candidate_binding_ids=candidate_ids,
             completeness=False,
             note="no_valid_boolean_source",
+        )
+
+    @staticmethod
+    def _select_opening_contacts(
+        fusion: Fusion,
+        candidates: tuple[AtomicSignal, ...],
+        field_schema: ContractFieldSchema,
+        now: datetime,
+    ) -> _FusionSelection:
+        """Normalize the two raw contacts used by the opening pilot.
+
+        The raw MQTT entities expose ``on``/``off``.  They are not contract
+        values and therefore must never be passed through the enum schema as
+        if they were already ``open``/``closed``.  Every physical opening
+        result requires both contact signals to be present, fresh and
+        unambiguous.  Missing or degraded evidence deliberately falls through
+        to the contract's reject fallback.
+        """
+
+        candidate_ids = tuple(signal.binding_id for signal in candidates)
+        expected_ids = tuple(fusion.input_binding_ids)
+        by_id = {signal.binding_id: signal for signal in candidates}
+        missing = tuple(binding_id for binding_id in expected_ids if binding_id not in by_id)
+
+        def contact_value(signal: AtomicSignal) -> bool | None:
+            if signal.value is True or signal.value == "on":
+                return True
+            if signal.value is False or signal.value == "off":
+                return False
+            return None
+
+        contact_signals = tuple(by_id[binding_id] for binding_id in expected_ids if binding_id in by_id)
+        contact_values = tuple(contact_value(signal) for signal in contact_signals)
+        fresh = tuple(
+            signal
+            for signal in contact_signals
+            if contact_value(signal) is not None
+            and signal.evidence.freshness(
+                now,
+                field_schema.freshness_ttl_seconds,
+                field_schema.freshness_requirement,
+            )[0]
+            == FreshnessStatus.FRESH
+        )
+        all_contacts_valid = (
+            not missing
+            and len(contact_signals) == len(expected_ids)
+            and all(value is not None for value in contact_values)
+        )
+        all_contacts_fresh = len(fresh) == len(expected_ids)
+        representative = contact_signals[0] if contact_signals else None
+
+        if fusion.strategy == "opening_source_count":
+            if missing:
+                return _FusionSelection(
+                    value=None,
+                    state=ValueState.UNKNOWN,
+                    selected_signal=None,
+                    active_binding_ids=(),
+                    candidate_binding_ids=candidate_ids,
+                    completeness=False,
+                    note="opening_source_missing",
+                )
+            return _FusionSelection(
+                value=len(contact_signals),
+                state=ValueState.VALID,
+                selected_signal=representative,
+                active_binding_ids=candidate_ids,
+                candidate_binding_ids=candidate_ids,
+                completeness=True,
+            )
+
+        if fusion.strategy == "opening_available":
+            if not all_contacts_valid or representative is None:
+                return _FusionSelection(
+                    value=None,
+                    state=ValueState.UNAVAILABLE,
+                    selected_signal=None,
+                    active_binding_ids=(),
+                    candidate_binding_ids=candidate_ids,
+                    completeness=False,
+                    note="opening_source_unavailable",
+                )
+            if all_contacts_fresh and all(contact_values):
+                # Transport availability is not enough to claim that the
+                # aggregate opening evidence is usable when the raw contact
+                # pair is physically contradictory.
+                return _FusionSelection(
+                    value=False,
+                    state=ValueState.VALID,
+                    selected_signal=representative,
+                    active_binding_ids=(),
+                    candidate_binding_ids=candidate_ids,
+                    completeness=False,
+                    note="source_conflict",
+                    conflict=True,
+                )
+            return _FusionSelection(
+                value=all_contacts_fresh,
+                state=ValueState.VALID,
+                selected_signal=representative,
+                active_binding_ids=candidate_ids if all_contacts_fresh else (),
+                candidate_binding_ids=candidate_ids,
+                completeness=all_contacts_fresh,
+                note=None if all_contacts_fresh else "opening_source_not_fresh",
+            )
+
+        if not all_contacts_valid or not all_contacts_fresh:
+            return _FusionSelection(
+                value=None,
+                state=ValueState.UNKNOWN,
+                selected_signal=None,
+                active_binding_ids=(),
+                candidate_binding_ids=candidate_ids,
+                completeness=False,
+                note=(
+                    "opening_source_missing"
+                    if missing
+                    else "opening_source_not_fresh"
+                ),
+            )
+
+        if len(contact_values) != 2:
+            return _FusionSelection(
+                value=None,
+                state=ValueState.UNKNOWN,
+                selected_signal=None,
+                active_binding_ids=(),
+                candidate_binding_ids=candidate_ids,
+                completeness=False,
+                note="opening_source_incomplete",
+            )
+
+        open_contact, tilt_contact = contact_values
+        if open_contact and tilt_contact:
+            return _FusionSelection(
+                value=None,
+                state=ValueState.UNKNOWN,
+                selected_signal=None,
+                active_binding_ids=(),
+                candidate_binding_ids=candidate_ids,
+                completeness=False,
+                note="source_conflict",
+                conflict=True,
+            )
+
+        if fusion.strategy == "opening_is_open":
+            value: Any = open_contact
+        else:
+            value = "open" if open_contact else "tilted" if tilt_contact else "closed"
+        return _FusionSelection(
+            value=value,
+            state=ValueState.VALID,
+            selected_signal=representative,
+            active_binding_ids=candidate_ids,
+            candidate_binding_ids=candidate_ids,
+            completeness=True,
         )
 
     @staticmethod
@@ -794,4 +969,8 @@ class SignalGraph:
         graph = cls()
         for binding in config.bindings:
             graph.add_binding(binding)
+        if config.mode.value == "published":
+            from .published import build_pilot_fusions
+
+            graph.add_fusions(build_pilot_fusions(config))
         return graph

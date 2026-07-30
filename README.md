@@ -5,18 +5,22 @@ around an internal signal graph. This installable stable release is deliberately
 `shadow_only`: it can read explicitly configured source states, evaluate
 versioned internal contracts, and expose diagnostics through a read-only
 WebSocket foundation. It does not create Home Assistant entities, call
-services, make policy decisions, or perform actuation.
+services, make policy decisions, or perform actuation. A separate, explicit
+Published pilot exists only for the single Benni `opening.v1` contract and is
+never enabled by installation or by the default ConfigEntry.
 
 The implementation is intentionally independent of historical device,
-combined and master models. A future public boundary may be explicit, but
-this release candidate rejects a public entity allowlist and always projects
-an empty set.
+combined and master models. The public boundary is explicit and exact: only
+`sensor.benni_opening_kitchen_patio_door` may be projected after the Benni
+Published pilot has been configured with the two verified raw sources. Raw
+sources, AtomicSignals, Fusionen and diagnostics never become entities.
 
 ## Status
 
-This is the installable Shadow-only release with the first live-testable Svelte
-UX for `ha-platform/control#59` (backend foundation: `#57`).
-The GitLab source is `ha-platform/core-contracts` and the public HACS mirror is
+This is the installable Shadow-only release tracked in
+[GitHub issue #1](https://github.com/Levtos/benni-core-contracts/issues/1),
+with the first live-testable Svelte UX.
+The canonical repository and HACS source is
 `Levtos/benni-core-contracts`; the release tag is `v0.1.1`. Installation
 is a package distribution step only: it does not activate a ConfigEntry, create
 entities, alter a registry, or constitute live approval. The UX becomes
@@ -46,6 +50,13 @@ The separate installation procedure is in
 details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
 notes are in [release-notes-shadow-0.1.1.md](docs/release-notes-shadow-0.1.1.md).
 
+The first explicit Published pilot is specified in
+[published-opening-contract-v1.md](docs/published-opening-contract-v1.md).
+The current live ConfigEntry remains Shadow-only; this branch has not changed
+Home Assistant or created the pilot entity live. A later Benni-only test must
+select both verified kitchen patio-door contact sources explicitly before any
+entity-platform setup is allowed.
+
 The Source Binding Evidence Gate contains only versioned, read-only evidence
 records. It does not populate the ConfigEntry or activate any binding.
 The Benni Owner-/Required-Field-Gate v1 is the only in-scope profile for this
@@ -58,12 +69,14 @@ The Live Evidence Acquisition Gate documents the current read-only probe and
 keeps every source OPEN when state API authentication or ownership evidence is
 missing. The ConfigEntry requires `profile=benni` and an explicit
 `mode=shadow_only`; there is no implicit mode default, no parent activation,
-and no public entity allowlist in this RC.
+and no public entity allowlist in the Shadow default. The separate Published
+pilot is limited to the exact kitchen-patio Opening Contract described below.
 
-The release is not a production Contract publication. Benni is the only
-permitted Shadow profile; Eltern remains `parent_future`/`out_of_scope`.
-Room Climate, Opening, Weather/Environment and Technical Device results remain
-internal and diagnostic. Lock and Cover position remain evidence-only.
+The release is not a general production Contract publication. Benni is the
+only permitted runtime profile; Eltern remains `parent_future`/`out_of_scope`.
+Room Climate, Weather/Environment and Technical Device results remain
+internal and diagnostic. Only the explicitly configured Opening pilot may be
+published; Lock and Cover position remain evidence-only.
 
 ## Local verification
 

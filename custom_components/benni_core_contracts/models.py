@@ -1,9 +1,9 @@
-"""New internal signal-graph models.
+"""Signal-graph models and the explicit contract publication boundary.
 
-The models are intentionally not Home Assistant entity models. A
-``PublishedContract`` is a graph result; it becomes a public HA entity only
-through a future explicit allowlist in a separately approved release. This
-shadow-only release candidate never projects it publicly.
+The models remain independent of Home Assistant entity classes. A
+``PublishedContract`` becomes a public HA entity only through the exact
+allowlist and the separately gated ``published`` pilot mode; shadow-only
+runtime evaluation never projects it publicly.
 """
 
 from __future__ import annotations
@@ -17,6 +17,10 @@ from .const import (
     CONFIG_SCHEMA_VERSION,
     DEFAULT_PROFILE,
     MODE_SHADOW_ONLY,
+    MODE_PUBLISHED,
+    PILOT_OPENING_BINDING_IDS,
+    PILOT_OPENING_CONTRACT_ID,
+    PILOT_OPENING_ENTITY_ID,
 )
 from .quality import (
     FallbackPolicy,
@@ -47,6 +51,7 @@ class ProfileScope(str, Enum):
 
 class RuntimeMode(str, Enum):
     SHADOW_ONLY = MODE_SHADOW_ONLY
+    PUBLISHED = MODE_PUBLISHED
 
 
 @dataclass(frozen=True)
@@ -152,7 +157,12 @@ class AtomicSignal:
 
 @dataclass(frozen=True)
 class Fusion:
-    """A contract-field fusion rule over internal signals."""
+    """A contract-field fusion rule over internal signals.
+
+    The opening pilot uses three domain-normalizing strategies.  They remain
+    internal data transformations; they are not policy decisions and do not
+    create entities by themselves.
+    """
 
     fusion_id: str
     contract_id: str
@@ -167,7 +177,15 @@ class Fusion:
             raise ValueError("fusion_id, contract_id, and field are required")
         if not self.input_binding_ids and not self.input_fusion_ids:
             raise ValueError("Fusion needs at least one input binding or fusion")
-        if self.strategy not in {"first_healthy", "any_true", "latest"}:
+        if self.strategy not in {
+            "first_healthy",
+            "any_true",
+            "latest",
+            "opening_contacts",
+            "opening_is_open",
+            "opening_available",
+            "opening_source_count",
+        }:
             raise ValueError(f"unsupported fusion strategy: {self.strategy}")
 
     def as_dict(self) -> dict[str, Any]:
@@ -302,6 +320,7 @@ class ConfigModel:
     profile: ProfileId = ProfileId(DEFAULT_PROFILE)
     mode: RuntimeMode | None = None
     entity_allowlist: tuple[str, ...] = ()
+    published_contracts: tuple[str, ...] = ()
     bindings: tuple[SourceBinding, ...] = ()
 
     def __post_init__(self) -> None:
@@ -313,12 +332,33 @@ class ConfigModel:
             raise ValueError("an explicit runtime mode is required")
         if not isinstance(self.mode, RuntimeMode):
             raise ValueError("mode must be a supported RuntimeMode")
-        if self.mode != RuntimeMode.SHADOW_ONLY:
-            raise ValueError("only mode=shadow_only is available in this release candidate")
-        if self.entity_allowlist:
+        if self.mode == RuntimeMode.SHADOW_ONLY and self.entity_allowlist:
             raise ValueError("shadow_only does not permit a public entity allowlist")
+        if self.mode == RuntimeMode.SHADOW_ONLY and self.published_contracts:
+            raise ValueError("shadow_only does not permit published contracts")
+        if self.mode == RuntimeMode.PUBLISHED:
+            if self.profile != ProfileId.BENNI:
+                raise ValueError("published mode is restricted to the Benni profile")
+            if set(self.published_contracts) != {PILOT_OPENING_CONTRACT_ID}:
+                raise ValueError(
+                    "published mode currently permits exactly the verified opening pilot"
+                )
+            if set(self.entity_allowlist) != {PILOT_OPENING_ENTITY_ID}:
+                raise ValueError(
+                    "published mode requires the exact opening pilot entity allowlist"
+                )
+            binding_ids = {binding.binding_id for binding in self.bindings}
+            if binding_ids != set(PILOT_OPENING_BINDING_IDS):
+                missing = set(PILOT_OPENING_BINDING_IDS) - binding_ids
+                extra = binding_ids - set(PILOT_OPENING_BINDING_IDS)
+                raise ValueError(
+                    "published opening pilot requires exactly its two source bindings; "
+                    f"missing={sorted(missing)}, extra={sorted(extra)}"
+                )
         if len(set(self.entity_allowlist)) != len(self.entity_allowlist):
             raise ValueError("entity_allowlist must not contain duplicates")
+        if len(set(self.published_contracts)) != len(self.published_contracts):
+            raise ValueError("published_contracts must not contain duplicates")
         if any("*" in entity_id or "." not in entity_id for entity_id in self.entity_allowlist):
             raise ValueError("entity_allowlist must contain exact entity IDs")
         binding_ids = [binding.binding_id for binding in self.bindings]
@@ -341,6 +381,7 @@ class ConfigModel:
             "profile": self.profile.value,
             "mode": self.mode.value,
             "entity_allowlist": list(self.entity_allowlist),
+            "published_contracts": list(self.published_contracts),
             "bindings": [binding.as_dict() for binding in self.bindings],
         }
 
@@ -361,6 +402,9 @@ class ConfigModel:
             profile=profile,
             mode=RuntimeMode(str(mode_value)),
             entity_allowlist=tuple(str(value) for value in merged.get("entity_allowlist", ())),
+            published_contracts=tuple(
+                str(value) for value in merged.get("published_contracts", ())
+            ),
             bindings=tuple(
                 SourceBinding.from_dict(value, default_profile=profile)
                 for value in merged.get("bindings", ())
