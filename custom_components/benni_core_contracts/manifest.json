@@ -1,7 +1,7 @@
 {
   "domain": "benni_core_contracts",
   "name": "Benni Core Contracts",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "documentation": "https://github.com/Levtos/benni-core-contracts",
   "issue_tracker": "https://github.com/Levtos/benni-core-contracts/issues/1",
   "codeowners": ["@codex-agent"],
