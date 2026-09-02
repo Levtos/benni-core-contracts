@@ -199,6 +199,24 @@ class Fusion:
             "consumer_ids": list(self.consumer_ids),
         }
 
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "Fusion":
+        """Restore a fusion definition without evaluating runtime state."""
+
+        return cls(
+            fusion_id=str(data["fusion_id"]),
+            contract_id=str(data["contract_id"]),
+            field=str(data["field"]),
+            input_binding_ids=tuple(
+                str(value) for value in data.get("input_binding_ids", ())
+            ),
+            input_fusion_ids=tuple(
+                str(value) for value in data.get("input_fusion_ids", ())
+            ),
+            strategy=str(data.get("strategy", "first_healthy")),
+            consumer_ids=tuple(str(value) for value in data.get("consumer_ids", ())),
+        )
+
 
 @dataclass(frozen=True)
 class PublishedContract:
