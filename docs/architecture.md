@@ -42,9 +42,10 @@ Attribute bleiben getrennte Evidence. Der Listener besitzt keinen Schreibpfad.
 ### SourceBinding
 
 Beschreibt exakt eine konkrete HA-Quell-Entity und ihre interne Aufgabe:
-`source_id`, `entity_id`, `field`, `capability`, Required-Status, Freshness-
-TTL und bekannte Consumer. Wildcards werden abgelehnt. `read_only` ist eine
-harte Modellinvariante.
+`source_id`, `entity_id`, `field`, `capability`, optionalen Anzeigenamen,
+Required-Status, Freshness-TTL und bekannte Consumer. `enabled` steuert den
+aktiven Beobachtungspfad, ohne die technische Binding-ID zu ändern. Wildcards
+werden abgelehnt. `read_only` ist eine harte Modellinvariante.
 
 ### AtomicSignal
 
@@ -158,6 +159,15 @@ Graph-Validierung. Die lokale letzte gültige Revision ist ein separater
 Last-Known-Good-Cache; Details zu Schema, Migration, Rollback und
 Optimistic-Concurrency stehen in
 [Registry Storage v1](registry-storage-v1.md).
+
+Issue #17 legt darüber den `RegistryDomainService`. Drafts sind flüchtige
+Edit-Stände und werden nur über eine explizite Save-Aktion als neue Revision
+gespeichert. `validate` führt den vollständigen Graph-Probeaufbau ohne
+Persistenz aus; `RegistryRuntime` tauscht den aktiven Graph-Snapshot erst nach
+erfolgreicher PostgreSQL-Aktivierung atomar aus. Die getrennte Admin-Write-
+WebSocket-Grenze ist in [Registry Backend-Service v1](registry-service-v1.md)
+dokumentiert. Consumer-API, Fusion-Editor, Svelte-UX und Consumer-Cutover sind
+bewusst nicht Teil dieses Slice.
 
 ## Entity-Grenze
 

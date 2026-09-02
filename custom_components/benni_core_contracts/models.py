@@ -69,21 +69,30 @@ class SourceBinding:
     consumer_ids: tuple[str, ...] = ()
     fallback: FallbackPolicy = field(default_factory=FallbackPolicy)
     read_only: bool = True
+    display_name: str | None = None
+    enabled: bool = True
 
     def __post_init__(self) -> None:
         if not self.binding_id or not self.source_id or not self.field or not self.capability:
             raise ValueError("binding_id, source_id, field, and capability are required")
         if not isinstance(self.profile_id, ProfileId):
             raise ValueError("profile_id must be a supported ProfileId")
+        if self.display_name is not None:
+            if not isinstance(self.display_name, str):
+                raise ValueError("display_name must be a string when supplied")
+            if not self.display_name.strip():
+                raise ValueError("display_name must not be empty when supplied")
         if "." not in self.entity_id or "*" in self.entity_id:
             raise ValueError("entity_id must be one concrete Home Assistant entity")
         if self.freshness_ttl_seconds <= 0:
             raise ValueError("freshness_ttl_seconds must be positive")
         if not self.read_only:
             raise ValueError("SourceBinding is read-only by design")
+        if not isinstance(self.enabled, bool):
+            raise ValueError("enabled must be a boolean")
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "binding_id": self.binding_id,
             "source_id": self.source_id,
             "entity_id": self.entity_id,
@@ -96,6 +105,13 @@ class SourceBinding:
             "fallback": self.fallback.as_dict(),
             "read_only": self.read_only,
         }
+        # Keep the Issue #16 canonical JSON/checksum stable for existing
+        # bindings; new optional edit fields are serialized only when used.
+        if self.display_name is not None:
+            data["display_name"] = self.display_name
+        if not self.enabled:
+            data["enabled"] = False
+        return data
 
     @classmethod
     def from_dict(
@@ -104,6 +120,11 @@ class SourceBinding:
         *,
         default_profile: ProfileId = ProfileId.BENNI,
     ) -> "SourceBinding":
+        if "display_name" in data and data["display_name"] is not None:
+            if not isinstance(data["display_name"], str):
+                raise TypeError("display_name must be a string when supplied")
+        if "enabled" in data and not isinstance(data["enabled"], bool):
+            raise TypeError("enabled must be a boolean")
         return cls(
             binding_id=str(data["binding_id"]),
             source_id=str(data["source_id"]),
@@ -111,11 +132,13 @@ class SourceBinding:
             field=str(data["field"]),
             capability=str(data["capability"]),
             profile_id=ProfileId(str(data.get("profile_id", default_profile.value))),
+            display_name=data.get("display_name"),
             required=bool(data.get("required", True)),
             freshness_ttl_seconds=int(data.get("freshness_ttl_seconds", 300)),
             consumer_ids=tuple(str(value) for value in data.get("consumer_ids", ())),
             fallback=FallbackPolicy.from_dict(data.get("fallback")),
             read_only=bool(data.get("read_only", True)),
+            enabled=data.get("enabled", True),
         )
 
 

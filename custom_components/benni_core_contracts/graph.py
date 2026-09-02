@@ -204,6 +204,8 @@ class SignalGraph:
         if binding_id not in self._bindings:
             raise GraphError(f"unknown binding: {binding_id}")
         binding = self._bindings[binding_id]
+        if not binding.enabled:
+            raise GraphError(f"binding is disabled: {binding_id}")
         if observation.source_id != binding.source_id or observation.entity_id != binding.entity_id:
             raise GraphError("observation does not match its SourceBinding")
         reference = now or self._now_factory()
