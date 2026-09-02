@@ -1,4 +1,4 @@
-# Benni Core Contracts — Shadow-only `0.1.4`
+# Benni Core Contracts — Shadow-only `0.1.4` / Registry Storage v1
 
 `benni_core_contracts` is a new Home Assistant foundation integration built
 around an internal signal graph. This installable stable release is deliberately
@@ -15,6 +15,13 @@ combined and master models. The public boundary is explicit and exact: only
 Published pilot has been configured with the two verified raw sources. Raw
 sources, AtomicSignals, Fusionen and diagnostics never become entities.
 
+Issue #16 adds the storage foundation for the next registry stage: PostgreSQL
+is the canonical store for JSONB registry revisions, with atomic activation,
+optimistic concurrency, and a validated local Last-Known-Good fallback. The
+existing ConfigEntry remains a bootstrap for the current runtime; it is not
+used as a second registry store. The backend write service, consumer API,
+subscriptions, and registry UX remain follow-up work.
+
 ## Status
 
 This is the installable Shadow-only release tracked in
@@ -28,6 +35,7 @@ available as a read-only Home Assistant sidebar panel after the integration is
 installed and its explicit Benni ConfigEntry is loaded.
 
 See [the architecture](docs/architecture.md), the
+[Registry Storage v1](docs/registry-storage-v1.md), the
 [Gate Pack v1](docs/gate-pack-v1.md), the
 [Contract Evidence Gate v1](docs/contract-evidence-gate-v1.md), the
 [Source Binding Evidence Gate v1](docs/source-binding-evidence-gate-v1.md),

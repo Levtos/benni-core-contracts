@@ -134,10 +134,11 @@ außerhalb dieses Repositories.
 
 ## ConfigEntry und Storage
 
-Die ConfigEntry trägt `ConfigModel` Version 1: Profil, Modus, exakte
-Allowlist, freigegebene Contract-IDs und SourceBindings. Der Flow verlangt
-immer einen expliziten Modus. `shadow_only` ist der sichere Default ohne
-Allowlist und ohne Bindings. `published` ist nur für Benni, exakt
+Die ConfigEntry trägt `ConfigModel` Version 1 als schlanken HA-Bootstrap:
+Profil, Modus, exakte Allowlist, freigegebene Contract-IDs und die expliziten
+Pilot-SourceBindings. Der Flow verlangt immer einen expliziten Modus.
+`shadow_only` ist der sichere Default ohne Allowlist und ohne Bindings.
+`published` ist nur für Benni, exakt
 `benni.opening.kitchen_patio_door`, exakt
 `sensor.benni_opening_kitchen_patio_door` und genau die zwei read-only
 verifizierten Küchen-Terrassentür-Quellen zulässig. Es gibt keinen impliziten
@@ -147,6 +148,16 @@ Der HA-Store hat Version 2. Er speichert ausschließlich Runtime-Signale,
 Restore-Marker sowie Diagnose-/Shadow-Daten. Konfigurationsdaten im Store
 werden abgewiesen. Beim Restore wird die originale Evidence nicht wieder als
 aktuell verwendet; der Graph erzeugt neue `restore`-Evidence.
+
+Die kanonische produktive Registry-Konfiguration liegt davon getrennt in
+PostgreSQL. `RegistryPayload` verwendet die bestehenden `SourceBinding`- und
+`Fusion`-Modelle und ergänzt Contract-Instanzen, Consumer-Overrides und
+Registry-Metadaten. `PostgresRegistryRepository` persistiert jede Änderung als
+JSONB-Revision und aktiviert sie nur innerhalb einer atomaren Transaktion nach
+Graph-Validierung. Die lokale letzte gültige Revision ist ein separater
+Last-Known-Good-Cache; Details zu Schema, Migration, Rollback und
+Optimistic-Concurrency stehen in
+[Registry Storage v1](registry-storage-v1.md).
 
 ## Entity-Grenze
 

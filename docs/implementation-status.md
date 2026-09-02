@@ -4,6 +4,13 @@ Stand: 2026-07-31, Benni Shadow-only Release `0.1.4`,
 Published Options-Flow-Fix und Published Opening Contract v1 lokal
 implementiert; Live-Aktivierung weiterhin ausstehend.
 
+Der nachfolgende historische Issue-#1-Stand wird durch den Registry-Storage-v1-
+Slice aus Issue #16 ergänzt: PostgreSQL-Revisionen und der lokale, validierte
+Last-Known-Good-Fallback liegen in `registry.py` und `registry_store.py`. Die
+HA-ConfigEntry, der Runtime-Store und die read-only WebSocket-Grenze bleiben
+für diesen Slice unverändert; die Backend-/Write- und UX-Folge-Issues sind
+nicht vorweggenommen.
+
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die
 laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
 geladen, die MQTT-Rohquellen für den Küchen-Terrassentür-Pilot sind vorhanden,
@@ -21,12 +28,14 @@ Neu im Repository `core-contracts`:
 - Domain: `const.py`, `quality.py`, `models.py`, `schema.py`, `contracts.py`,
   `diagnostics.py`, `graph.py`, `storage.py`, `config_io.py`, `profiles.py`,
   `shadow.py`, `evidence_gate.py`, `source_binding_evidence.py`,
-  `owner_required_gate.py`, `shadow_verification.py`, `live_evidence.py`.
+  `owner_required_gate.py`, `shadow_verification.py`, `live_evidence.py`,
+  `registry.py`, `registry_store.py`.
+- Migration: `migrations/001_registry_revision.sql`.
 - Dokumentation: `docs/architecture.md`, `docs/gate-pack-v1.md`,
   `docs/contract-evidence-gate-v1.md`, `docs/source-binding-evidence-gate-v1.md`,
   `docs/source-binding-matrix-v1.md`, `docs/benni-owner-required-field-gate-v1.md`,
   `docs/benni-shadow-contract-verification-v1.md`,
-  `docs/benni-live-evidence-acquisition-v1.md`,
+  `docs/benni-live-evidence-acquisition-v1.md`, `docs/registry-storage-v1.md`,
   `docs/published-opening-contract-v1.md`,
   `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
@@ -56,6 +65,9 @@ Neu im Repository `core-contracts`:
 - Der Published-Opening-Pilot wird durch `tests/test_published_opening_contract.py`
   gegen Zustandsmapping, Freshness, Konflikt-/Fallback-Semantik, Allowlist,
   Shadow-Grenze und Sensor-Plattform-Forwarding geprüft.
+- Der Registry-Storage-v1-Slice wird durch `tests/test_registry_store.py` gegen
+  Revisionserzeugung, atomare Aktivierung, Rollback, Concurrency-Konflikt,
+  PostgreSQL-Ausfall und validierten Last-Known-Good-Fallback geprüft.
 
 ## Implementierte Modelle
 
@@ -70,6 +82,9 @@ Neu im Repository `core-contracts`:
 - ConfigEntry-Modell Version 1 und Runtime-Store-Envelope Version 2. Der
   Store enthält keine Konfiguration; Import/Export läuft nur über
   `ConfigCodec` für die ConfigEntry.
+- `RegistryPayload`, `RegistryRevision` und `RevisionStatus` für die
+  PostgreSQL-Registry mit JSONB-Checksumme, atomarer Aktivierung,
+  Optimistic-Concurrency und explizitem Last-Known-Good-Health-Ergebnis.
 - `FreshnessOrigin`, `FreshnessStatus`, `FreshnessRequirement`,
   `HealthStatus`, `QualityStatus`, `ValueState`, `SafetyStatus`,
   `FallbackAction` und `FieldQuality`.

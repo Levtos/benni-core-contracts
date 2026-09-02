@@ -1,4 +1,4 @@
-"""Versioned runtime storage; ConfigEntry remains the only config owner."""
+"""Versioned runtime storage; canonical registry configuration lives in PostgreSQL."""
 
 from __future__ import annotations
 
