@@ -1,15 +1,16 @@
 # Implementierungsstatus – GitHub Issue #1
 
-Stand: 2026-07-31, Benni Shadow-only Release `0.1.4`,
+Stand: 2026-09-02, Benni Shadow-only Release `0.1.4`,
 Published Options-Flow-Fix und Published Opening Contract v1 lokal
 implementiert; Live-Aktivierung weiterhin ausstehend.
 
-Der nachfolgende historische Issue-#1-Stand wird durch den Registry-Storage-v1-
-Slice aus Issue #16 ergänzt: PostgreSQL-Revisionen und der lokale, validierte
-Last-Known-Good-Fallback liegen in `registry.py` und `registry_store.py`. Die
-HA-ConfigEntry, der Runtime-Store und die read-only WebSocket-Grenze bleiben
-für diesen Slice unverändert; die Backend-/Write- und UX-Folge-Issues sind
-nicht vorweggenommen.
+Der nachfolgende historische Issue-#1-Stand wird durch die Registry-Slices aus
+Issue #16 und #17 ergänzt: PostgreSQL-Revisionen, atomare Aktivierung, der
+validierte Last-Known-Good-Fallback und der `RegistryDomainService` liegen in
+`registry.py`, `registry_store.py` und `registry_service.py`. Drafts werden nur
+im Service gehalten; die getrennte Admin-Write-WebSocket-Grenze speichert nur
+über explizite Save-Aktionen. Consumer-API, Svelte-UX, Fusion-Editor und
+Consumer-Cutover sind nicht vorweggenommen.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die
 laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
@@ -29,14 +30,14 @@ Neu im Repository `core-contracts`:
   `diagnostics.py`, `graph.py`, `storage.py`, `config_io.py`, `profiles.py`,
   `shadow.py`, `evidence_gate.py`, `source_binding_evidence.py`,
   `owner_required_gate.py`, `shadow_verification.py`, `live_evidence.py`,
-  `registry.py`, `registry_store.py`.
+  `registry.py`, `registry_store.py`, `registry_service.py`.
 - Migration: `migrations/001_registry_revision.sql`.
 - Dokumentation: `docs/architecture.md`, `docs/gate-pack-v1.md`,
   `docs/contract-evidence-gate-v1.md`, `docs/source-binding-evidence-gate-v1.md`,
   `docs/source-binding-matrix-v1.md`, `docs/benni-owner-required-field-gate-v1.md`,
   `docs/benni-shadow-contract-verification-v1.md`,
   `docs/benni-live-evidence-acquisition-v1.md`, `docs/registry-storage-v1.md`,
-  `docs/published-opening-contract-v1.md`,
+  `docs/published-opening-contract-v1.md`, `docs/registry-service-v1.md`,
   `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
   `docs/release-notes-shadow-0.1.0-alpha.1.md`, `docs/ux-contract.md`,
@@ -68,6 +69,11 @@ Neu im Repository `core-contracts`:
 - Der Registry-Storage-v1-Slice wird durch `tests/test_registry_store.py` gegen
   Revisionserzeugung, atomare Aktivierung, Rollback, Concurrency-Konflikt,
   PostgreSQL-Ausfall und validierten Last-Known-Good-Fallback geprüft.
+- Der Registry-Backend-Service-v1-Slice wird durch
+  `tests/test_registry_service.py` und `tests/test_registry_write_api.py` gegen
+  Draft-Lifecycle, Binding-/Contract-Instance-CRUD, Validierung ohne
+  Persistenz, Save/Activation, Discard, Rollback, OCC, Fehlertransport,
+  Backend-Ausfall und die Admin-Grenze geprüft.
 
 ## Implementierte Modelle
 
@@ -85,6 +91,10 @@ Neu im Repository `core-contracts`:
 - `RegistryPayload`, `RegistryRevision` und `RevisionStatus` für die
   PostgreSQL-Registry mit JSONB-Checksumme, atomarer Aktivierung,
   Optimistic-Concurrency und explizitem Last-Known-Good-Health-Ergebnis.
+- `RegistryDraft`, `RegistryDomainService` und `RegistryRuntime` für den
+  flüchtigen Edit-Stand, den validierten Save-/Rollback-Pfad und den atomaren
+  Runtime-Graph-Snapshot. `SourceBinding` unterstützt dabei weiterhin stabile
+  IDs sowie den editierbaren Anzeigenamen und den Aktivierungsstatus.
 - `FreshnessOrigin`, `FreshnessStatus`, `FreshnessRequirement`,
   `HealthStatus`, `QualityStatus`, `ValueState`, `SafetyStatus`,
   `FallbackAction` und `FieldQuality`.
@@ -144,15 +154,15 @@ Published-Allowlist eine Entity-Projektion anfordern.
 ## Tests
 
 Die Tests sind als stdlib-only `unittest`-Suite angelegt. Für den aktuellen
-Branch werden Syntaxkompilierung und 137 Unit-/Architekturtests ausgeführt:
+Branch werden Syntaxkompilierung und 167 Unit-/Architekturtests ausgeführt:
 
 ```text
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-Ergebnis: **137 Tests grün**; `python -m compileall -q custom_components tests`
+Ergebnis: **167 Tests grün**; `python -m compileall -q custom_components tests scripts`
 war ebenfalls erfolgreich. Die Repository-Validierung prüfte **7 JSON-Dateien**,
-**1 TOML-Datei** und **80 Textdateien** ohne Syntax- bzw. Whitespace-Befund.
+**1 TOML-Datei** und **91 Textdateien** ohne Syntax- bzw. Whitespace-Befund.
 Der
 vollständige Feld-/Fixture-/Boundary-Audit ist in
 `docs/source-binding-evidence-gate-v1.md` und

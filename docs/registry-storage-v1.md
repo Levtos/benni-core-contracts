@@ -74,7 +74,8 @@ write is introduced.
 
 ## Deliberate follow-up boundaries
 
-This slice does not add the #17 backend service or admin authorization, write
-WebSocket commands, consumer API/subscriptions, Svelte registry UX, import or
-export workflow, or consumer cutovers. Those layers can build on the repository
-without changing its revision, atomicity, or LKG contracts.
+Issue #17 adds the backend service, admin authorization, and validated write
+WebSocket commands in [Registry Backend-Service v1](registry-service-v1.md).
+The repository's revision, atomicity, and LKG contracts remain unchanged.
+Consumer API/subscriptions, Svelte registry UX, import/export workflow, and
+consumer cutovers remain follow-up work.

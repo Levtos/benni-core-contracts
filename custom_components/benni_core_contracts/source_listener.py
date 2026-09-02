@@ -70,6 +70,9 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
     from homeassistant.helpers.event import async_track_state_change_event
 
     for binding in runtime.graph.bindings():
+        if not binding.enabled:
+            continue
+
         async def handle_event(event: Any, current_binding=binding) -> None:
             new_state = event.data.get("new_state")
             if new_state is None:
