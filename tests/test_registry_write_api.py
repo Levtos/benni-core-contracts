@@ -28,6 +28,7 @@ from custom_components.benni_core_contracts.registry_service import (
 from custom_components.benni_core_contracts.registry_store import (
     InMemoryLastKnownGoodCache,
     PostgresRegistryRepository,
+    PostgresUnavailableError,
 )
 from custom_components.benni_core_contracts.websocket_api import (
     async_register_registry_write_api,
@@ -205,6 +206,17 @@ class RegistryWriteApiTests(unittest.TestCase):
         self.assertEqual(backend["error"]["code"], "backend_unavailable")
         self.assertEqual(backend["error"]["message"], "registry backend is unavailable")
         self.assertNotIn("DSN", str(backend))
+
+        repository_backend = build_registry_write_error(
+            WS_REGISTRY_DRAFT_SAVE,
+            PostgresUnavailableError("internal database detail"),
+        )
+        self.assertEqual(repository_backend["error"]["code"], "backend_unavailable")
+        self.assertEqual(
+            repository_backend["error"]["message"],
+            "registry backend is unavailable",
+        )
+        self.assertNotIn("internal database detail", str(repository_backend))
 
         missing = build_registry_write_error(
             WS_REGISTRY_DRAFT_SAVE,

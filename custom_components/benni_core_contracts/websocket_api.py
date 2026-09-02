@@ -213,7 +213,7 @@ def build_registry_write_error(
         code = "revision_not_found"
         message = "registry revision was not found"
     elif isinstance(error, (BackendUnavailableError, PostgresUnavailableError)):
-        code = error.code
+        code = getattr(error, "code", "backend_unavailable")
         message = "registry backend is unavailable"
     elif isinstance(error, RevisionStateError):
         code = "revision_state_error"
