@@ -28,6 +28,7 @@ STORAGE_KEY_PREFIX = f"{DOMAIN}.shadow_only"
 WS_REGISTERED = "_websocket_registered"
 REGISTRY_SERVICE_KEY = "_registry_service"
 REGISTRY_RUNTIME_KEY = "_registry_runtime"
+CONSUMER_API_KEY = "_consumer_api"
 WS_WRITE_REGISTERED = "_registry_write_websocket_registered"
 
 WS_LIST_CONTRACTS = f"{DOMAIN}/list_contracts"

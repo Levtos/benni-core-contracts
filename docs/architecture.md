@@ -166,8 +166,10 @@ gespeichert. `validate` führt den vollständigen Graph-Probeaufbau ohne
 Persistenz aus; `RegistryRuntime` tauscht den aktiven Graph-Snapshot erst nach
 erfolgreicher PostgreSQL-Aktivierung atomar aus. Die getrennte Admin-Write-
 WebSocket-Grenze ist in [Registry Backend-Service v1](registry-service-v1.md)
-dokumentiert. Consumer-API, Fusion-Editor, Svelte-UX und Consumer-Cutover sind
-bewusst nicht Teil dieses Slice.
+dokumentiert. Die typisierte interne Consumer-Grenze und gefilterten
+Subscriptions sind in [Consumer API v1](consumer-api-v1.md) dokumentiert.
+Fusion-Editor, Svelte-UX und Consumer-Cutover sind bewusst nicht Teil dieses
+Slice.
 
 ## Entity-Grenze
 

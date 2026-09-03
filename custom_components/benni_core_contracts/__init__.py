@@ -7,6 +7,7 @@ from typing import Any
 
 from .const import (
     DOMAIN,
+    CONSUMER_API_KEY,
     MODE_PUBLISHED,
     MODE_SHADOW_ONLY,
     REGISTRY_RUNTIME_KEY,
@@ -15,6 +16,24 @@ from .const import (
 )
 from .graph import SignalGraph
 from .models import ConfigModel, ProfileId
+from .consumer_api import (
+    ConsumerAccessStatus,
+    ConsumerApi,
+    ConsumerApiError,
+    ConsumerBinding,
+    ConsumerContractSnapshot,
+    ConsumerDeclaration,
+    ConsumerEventKind,
+    ConsumerFieldSnapshot,
+    ConsumerImpact,
+    ConsumerLineage,
+    ConsumerRequirement,
+    ConsumerRevisionSnapshot,
+    ConsumerSubscription,
+    ConsumerUpdate,
+    ContractLookup,
+    RequirementState,
+)
 from .profiles import profile_definition
 from .registry_service import RegistryDomainService, RegistryRuntime
 from .shadow import PublishedRuntime, ShadowRuntime
@@ -30,7 +49,9 @@ from .websocket_api import (
 async def async_setup(hass: Any, config: dict[str, Any]) -> bool:
     registry = hass.data.setdefault(DOMAIN, {})
     service = registry.get(REGISTRY_SERVICE_KEY)
-    if service is not None:
+    if isinstance(service, RegistryDomainService):
+        if not isinstance(registry.get(CONSUMER_API_KEY), ConsumerApi):
+            registry[CONSUMER_API_KEY] = ConsumerApi(service.runtime)
         await async_register_registry_write_api(hass, service)
     return True
 
@@ -51,6 +72,9 @@ async def async_setup_registry_service(
     """
 
     registry = hass.data.setdefault(DOMAIN, {})
+    existing_consumer_api = registry.get(CONSUMER_API_KEY)
+    if isinstance(existing_consumer_api, ConsumerApi):
+        existing_consumer_api.close()
     service = RegistryDomainService(
         repository,
         schema_registry=schema_registry,
@@ -58,6 +82,7 @@ async def async_setup_registry_service(
     )
     registry[REGISTRY_SERVICE_KEY] = service
     registry[REGISTRY_RUNTIME_KEY] = service.runtime
+    registry[CONSUMER_API_KEY] = ConsumerApi(service.runtime)
     await async_register_registry_write_api(hass, service)
     return service
 
@@ -76,6 +101,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         return False
     registry = hass.data.setdefault(DOMAIN, {})
     service = registry.get(REGISTRY_SERVICE_KEY)
+    if isinstance(service, RegistryDomainService) and CONSUMER_API_KEY not in registry:
+        registry[CONSUMER_API_KEY] = ConsumerApi(service.runtime)
     graph = SignalGraph.from_config(config)
     if isinstance(service, RegistryDomainService):
         active_result = await service.async_read_active(config.profile)

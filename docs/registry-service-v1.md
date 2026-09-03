@@ -25,8 +25,9 @@ gespeichert. Die editierbaren Payloads verwenden weiterhin `SourceBinding`,
 `RegistryRuntime` ist der atomare In-Process-Holder für den zuletzt erfolgreich
 aktivierten Payload und den daraus gebauten `SignalGraph`. `prepare()` validiert
 und baut einen Graph-Probe-Stand ohne Seiteneffekt; `activate()` tauscht einen
-kompletten validierten Snapshot aus. Der Holder ist noch keine Consumer-API und
-führt keinen Consumer-Cutover aus.
+kompletten validierten Snapshot aus. Die getrennte, read-only Consumer-Grenze
+beobachtet diesen Holder; sie ist in [Consumer API v1](consumer-api-v1.md)
+dokumentiert und führt keinen Consumer-Cutover aus.
 
 Wenn ein Repository-Service über `async_setup_registry_service()` in Home
 Assistant injiziert wird, wird sein Runtime-Holder bei einem ConfigEntry-Start
@@ -101,7 +102,8 @@ Health-Ereignisse kennen weiterhin keinen Repository-Write-Pfad.
 ## Bewusste Folgegrenzen
 
 Dieser Slice implementiert keine Svelte-Registry-UX (#18), keinen separaten
-Fusion-Editor (#19), keine Consumer-API oder Subscriptions (#20), keinen
-Import/Export-Workflow (#22) und keinen CoreState-/MediaState-Cutover. Die
-read-only WebSocket-Commands, der bestehende Runtime-Store und die vorhandene
+Fusion-Editor (#19), keinen Import/Export-Workflow (#22) und keinen
+CoreState-/MediaState-Cutover. Die Consumer-API und Subscriptions aus #20 sind
+in [Consumer API v1](consumer-api-v1.md) beschrieben. Die read-only
+WebSocket-Commands, der bestehende Runtime-Store und die vorhandene
 Signalgraph-/Quality-/Freshness-Architektur bleiben kompatibel.

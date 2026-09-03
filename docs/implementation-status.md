@@ -1,6 +1,6 @@
 # Implementierungsstatus – GitHub Issue #1
 
-Stand: 2026-09-02, Benni Shadow-only Release `0.1.4`,
+Stand: 2026-09-03, Benni Shadow-only Release `0.1.4`,
 Published Options-Flow-Fix und Published Opening Contract v1 lokal
 implementiert; Live-Aktivierung weiterhin ausstehend.
 
@@ -9,8 +9,9 @@ Issue #16 und #17 ergänzt: PostgreSQL-Revisionen, atomare Aktivierung, der
 validierte Last-Known-Good-Fallback und der `RegistryDomainService` liegen in
 `registry.py`, `registry_store.py` und `registry_service.py`. Drafts werden nur
 im Service gehalten; die getrennte Admin-Write-WebSocket-Grenze speichert nur
-über explizite Save-Aktionen. Consumer-API, Svelte-UX, Fusion-Editor und
-Consumer-Cutover sind nicht vorweggenommen.
+über explizite Save-Aktionen. Die typisierte interne Consumer-API und
+gefilterten Subscriptions liegen in `consumer_api.py`; Svelte-UX, Fusion-Editor
+und Consumer-Cutover sind nicht vorweggenommen.
 
 Der Release-Gate enthält keinen Deployment- oder Consumer-Schritt. Die
 laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
@@ -30,7 +31,7 @@ Neu im Repository `core-contracts`:
   `diagnostics.py`, `graph.py`, `storage.py`, `config_io.py`, `profiles.py`,
   `shadow.py`, `evidence_gate.py`, `source_binding_evidence.py`,
   `owner_required_gate.py`, `shadow_verification.py`, `live_evidence.py`,
-  `registry.py`, `registry_store.py`, `registry_service.py`.
+  `registry.py`, `registry_store.py`, `registry_service.py`, `consumer_api.py`.
 - Migration: `migrations/001_registry_revision.sql`.
 - Dokumentation: `docs/architecture.md`, `docs/gate-pack-v1.md`,
   `docs/contract-evidence-gate-v1.md`, `docs/source-binding-evidence-gate-v1.md`,
@@ -38,6 +39,7 @@ Neu im Repository `core-contracts`:
   `docs/benni-shadow-contract-verification-v1.md`,
   `docs/benni-live-evidence-acquisition-v1.md`, `docs/registry-storage-v1.md`,
   `docs/published-opening-contract-v1.md`, `docs/registry-service-v1.md`,
+  `docs/consumer-api-v1.md`,
   `docs/benni-shadow-only-release-v1.md`, `docs/shadow-release-v1.md`,
   `docs/installation-shadow-only.md`,
   `docs/release-notes-shadow-0.1.0-alpha.1.md`, `docs/ux-contract.md`,
@@ -74,6 +76,12 @@ Neu im Repository `core-contracts`:
   Draft-Lifecycle, Binding-/Contract-Instance-CRUD, Validierung ohne
   Persistenz, Save/Activation, Discard, Rollback, OCC, Fehlertransport,
   Backend-Ausfall und die Admin-Grenze geprüft.
+- Der Exchange-Layer-v1-Slice aus Issue #20 wird durch
+  `tests/test_consumer_api.py` gegen typisierte Snapshots/Felder,
+  Quality/Freshness/Health, Revision/Lineage, Requirement-Impact,
+  Versionskompatibilität, relevante Subscriptions, Availability-Übergänge,
+  Cleanup und Callback-Isolation geprüft. Die Entwicklergrenze ist in
+  `docs/consumer-api-v1.md` dokumentiert.
 
 ## Implementierte Modelle
 

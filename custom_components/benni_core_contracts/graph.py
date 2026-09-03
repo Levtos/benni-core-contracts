@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import datetime
-from typing import Any, Iterable
+import logging
+from typing import Any, Callable, Iterable
 
 from .contracts import default_schema_registry
 from .diagnostics import build_diagnostic_projection
@@ -33,6 +34,9 @@ from .quality import (
     utc_now,
 )
 from .schema import ContractFieldSchema, ContractSchema, SchemaRegistry
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GraphError(ValueError):
@@ -89,6 +93,7 @@ class SignalGraph:
         self._contracts: dict[str, PublishedContract] = {}
         self._diagnostics: dict[str, DiagnosticProjection] = {}
         self._revision = 0
+        self._change_listeners: list[Callable[["SignalGraph"], None]] = []
 
     @property
     def revision(self) -> int:
@@ -99,6 +104,7 @@ class SignalGraph:
             raise GraphError(f"duplicate binding: {binding.binding_id}")
         self._bindings[binding.binding_id] = binding
         self._revision += 1
+        self._notify_change()
 
     def add_fusion(self, fusion: Fusion) -> None:
         self.add_fusions((fusion,))
@@ -160,6 +166,7 @@ class SignalGraph:
         self._fusions_by_id = all_by_id
         self._fusions = all_by_key
         self._revision += 1
+        self._notify_change()
 
     @staticmethod
     def _assert_acyclic(fusions: dict[str, Fusion]) -> None:
@@ -193,6 +200,33 @@ class SignalGraph:
 
     def signal(self, binding_id: str) -> AtomicSignal | None:
         return self._signals.get(binding_id)
+
+    def add_change_listener(self, listener: Callable[["SignalGraph"], None]) -> None:
+        """Register a read-only observer for graph/runtime changes.
+
+        Observers receive the graph only as an internal callback argument;
+        consumers use the separate Consumer API and never receive this object.
+        Duplicate registrations are ignored so repeated runtime wiring cannot
+        multiply update delivery.
+        """
+
+        if listener not in self._change_listeners:
+            self._change_listeners.append(listener)
+
+    def remove_change_listener(self, listener: Callable[["SignalGraph"], None]) -> None:
+        if listener in self._change_listeners:
+            self._change_listeners.remove(listener)
+
+    # Short aliases for internal adapters that use the generic observer term.
+    add_listener = add_change_listener
+    remove_listener = remove_change_listener
+
+    def _notify_change(self) -> None:
+        for listener in tuple(self._change_listeners):
+            try:
+                listener(self)
+            except Exception:  # pragma: no cover - defensive integration hook
+                LOGGER.exception("signal graph change listener failed")
 
     def ingest(
         self,
@@ -242,6 +276,7 @@ class SignalGraph:
         )
         self._signals[binding_id] = signal
         self._revision += 1
+        self._notify_change()
         return signal
 
     def restore_signal(
@@ -450,6 +485,7 @@ class SignalGraph:
             now=reference,
         )
         self._revision += 1
+        self._notify_change()
         return contract
 
     def _candidate_signals(self, fusion: Fusion | None) -> tuple[AtomicSignal, ...]:
