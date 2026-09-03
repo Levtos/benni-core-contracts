@@ -21,7 +21,8 @@ optimistic concurrency, and a validated local Last-Known-Good fallback. Issue
 #17 adds the draft/validate/save/discard/rollback service and an admin-only
 validated write boundary. The existing ConfigEntry remains a bootstrap for the
 current runtime; it is not used as a second registry store. Consumer API,
-subscriptions, registry UX, and consumer cutovers remain follow-up work.
+subscriptions, and the typed internal exchange boundary are implemented in
+Issue #20. Registry UX and consumer cutovers remain follow-up work.
 
 ## Status
 
@@ -38,6 +39,7 @@ installed and its explicit Benni ConfigEntry is loaded.
 See [the architecture](docs/architecture.md), the
 [Registry Storage v1](docs/registry-storage-v1.md), the
 [Registry Backend-Service v1](docs/registry-service-v1.md), the
+[Internal Consumer API v1](docs/consumer-api-v1.md), the
 [Gate Pack v1](docs/gate-pack-v1.md), the
 [Contract Evidence Gate v1](docs/contract-evidence-gate-v1.md), the
 [Source Binding Evidence Gate v1](docs/source-binding-evidence-gate-v1.md),

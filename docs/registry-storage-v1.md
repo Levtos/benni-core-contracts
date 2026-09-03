@@ -77,5 +77,6 @@ write is introduced.
 Issue #17 adds the backend service, admin authorization, and validated write
 WebSocket commands in [Registry Backend-Service v1](registry-service-v1.md).
 The repository's revision, atomicity, and LKG contracts remain unchanged.
-Consumer API/subscriptions, Svelte registry UX, import/export workflow, and
-consumer cutovers remain follow-up work.
+The typed Consumer API/subscriptions are documented in
+[Consumer API v1](consumer-api-v1.md). Svelte registry UX, import/export
+workflow, and consumer cutovers remain follow-up work.
