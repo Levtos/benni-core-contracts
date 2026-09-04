@@ -174,4 +174,6 @@ export interface HassConnection {
 
 export interface HassLike {
   connection?: HassConnection;
+  user?: { id: string; is_admin: boolean };
+  states?: Record<string, { entity_id: string; attributes: { friendly_name?: string } }>;
 }

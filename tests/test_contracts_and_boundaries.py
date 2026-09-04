@@ -120,6 +120,7 @@ class ContractAndBoundaryTests(unittest.TestCase):
         voluptuous = types.ModuleType("voluptuous")
         voluptuous.Required = lambda key: key
         voluptuous.Optional = lambda key: key
+        voluptuous.In = lambda values: values
 
         def websocket_command(schema):
             self.assertIsInstance(schema, dict)
@@ -170,9 +171,10 @@ class ContractAndBoundaryTests(unittest.TestCase):
                 WS_GET_DIAGNOSTICS,
                 WS_GET_GRAPH,
                 WS_GET_HEALTH,
+                "benni_core_contracts/registry/view",
             ],
         )
-        self.assertEqual(len(registered_handlers), 5)
+        self.assertEqual(len(registered_handlers), 6)
 
     def test_shadow_mode_does_not_forward_entity_platform_or_actuator_surface(self) -> None:
         self.assertTrue((PACKAGE / "sensor.py").exists())

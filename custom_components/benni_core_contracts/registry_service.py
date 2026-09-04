@@ -491,6 +491,8 @@ class RegistryDomainService:
     async def async_read_active(
         self,
         profile: ProfileId | str = ProfileId.BENNI,
+        *,
+        install_runtime: bool = True,
     ) -> RegistryLoadResult:
         profile_id = _profile_id(profile)
         result = await self._repository_call("load_active", profile_id)
@@ -517,7 +519,12 @@ class RegistryDomainService:
                     "revision_id": result.revision.id,
                 },
             )
-        if result.revision is not None:
+        if result.revision is not None and install_runtime:
+            current = self.runtime.active(profile_id)
+            if (current is not None and current.revision.id == result.revision.id
+                    and current.revision.checksum == result.revision.checksum
+                    and current.source == result.source):
+                return result
             try:
                 _normalized, graph = self._prepare_payload(result.revision.payload)
                 self.runtime.activate(result.revision, graph, source=result.source)

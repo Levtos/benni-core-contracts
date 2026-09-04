@@ -6,6 +6,7 @@ from typing import Any
 
 from .const import (
     DOMAIN,
+    CONSUMER_API_KEY,
     REGISTRY_SERVICE_KEY,
     WS_COMMANDS,
     WS_GET_CONTRACT,
@@ -56,6 +57,43 @@ from .registry_service import (
 )
 from .registry_store import PostgresUnavailableError
 from .shadow import ShadowRuntime
+from .models import ProfileId
+
+WS_REGISTRY_VIEW = f"{DOMAIN}/registry/view"
+
+
+async def registry_view(service, consumer_api, profile):
+    """Read configuration without resetting the live graph or creating a draft."""
+    selected = ProfileId(profile)
+    loaded = await service.async_read_active(selected, install_runtime=False)
+    history_error = None
+    try:
+        history = await service.async_list_revisions(selected)
+    except BackendUnavailableError:
+        history = ()
+        history_error = "backend_unavailable"
+    requirements = []
+    if consumer_api is not None:
+        for impact in consumer_api.all_impacts():
+            for state in impact.requirements:
+                if state.requirement.profile == selected:
+                    requirements.append({
+                        "consumer_id": impact.consumer_id,
+                        "contract_id": state.requirement.contract_id,
+                        "role": state.requirement.role,
+                        "status": state.status.value,
+                    })
+    return {"registry": public_load_result_dict(loaded),
+            "revisions": [public_revision_dict(item) for item in history],
+            "history_error": history_error, "requirements": requirements}
+
+
+def select_read_runtime(registry: dict, *, entry_id=None, profile=None):
+    """Explicit selectors never fall back to another household."""
+    candidates = (registry.get(entry_id),) if entry_id is not None else registry.values()
+    return next((value for value in candidates
+                 if isinstance(value, ShadowRuntime)
+                 and (profile is None or value.config.profile.value == profile)), None)
 
 
 def build_read_only_payload(
@@ -127,6 +165,7 @@ async def async_register_websocket_api(
             vol.Required("type"): command,
             vol.Optional("contract_id"): str,
             vol.Optional("entry_id"): str,
+            vol.Optional("profile"): vol.In(["benni", "eltern"]),
             vol.Optional("since_revision"): int,
         }
 
@@ -134,16 +173,18 @@ async def async_register_websocket_api(
         @websocket_api.async_response
         async def handle(hass: Any, connection: Any, msg: dict[str, Any]) -> None:
             try:
-                selected_runtime = registry.get(msg.get("entry_id"))
-                if not isinstance(selected_runtime, ShadowRuntime):
-                    selected_runtime = next(
-                        (
-                            value
-                            for key, value in registry.items()
-                            if key != WS_REGISTERED and isinstance(value, ShadowRuntime)
-                        ),
-                        None,
+                if command == WS_REGISTRY_VIEW:
+                    service = registry.get(REGISTRY_SERVICE_KEY)
+                    if service is None:
+                        raise BackendUnavailableError("registry service is unavailable")
+                    payload = await registry_view(
+                        service, registry.get(CONSUMER_API_KEY), msg.get("profile", "benni")
                     )
+                    connection.send_result(msg["id"], payload)
+                    return
+                selected_runtime = select_read_runtime(
+                    registry, entry_id=msg.get("entry_id"), profile=msg.get("profile")
+                )
                 if selected_runtime is None:
                     raise KeyError("no active core-contracts runtime")
                 payload = build_read_only_payload(
@@ -152,6 +193,10 @@ async def async_register_websocket_api(
                     msg.get("contract_id"),
                     since_revision=msg.get("since_revision"),
                 )
+            except RegistryServiceError as err:
+                error = build_registry_write_error(command, err)["error"]
+                connection.send_error(msg["id"], error["code"], error["message"])
+                return
             except KeyError as err:
                 connection.send_error(msg["id"], "not_found", str(err))
                 return
@@ -168,6 +213,7 @@ async def async_register_websocket_api(
         WS_GET_DIAGNOSTICS,
         WS_GET_GRAPH,
         WS_GET_HEALTH,
+        WS_REGISTRY_VIEW,
     ):
         register(command)
     registry[WS_REGISTERED] = True

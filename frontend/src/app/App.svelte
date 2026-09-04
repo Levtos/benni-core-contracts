@@ -6,6 +6,7 @@
   import GraphView from "../components/views/GraphView.svelte";
   import HealthView from "../components/views/HealthView.svelte";
   import OverviewView from "../components/views/OverviewView.svelte";
+  import RegistryView from "../components/views/RegistryView.svelte";
   import type { CoreContractsStore } from "../lib/core-contracts/store.svelte";
   import type { AppView } from "../lib/core-contracts/store.svelte";
   import type { NavItem } from "../components/shell/types";
@@ -13,18 +14,20 @@
   let { store }: { store: CoreContractsStore } = $props();
   const navItems: NavItem[] = [
     { id: "overview", label: "Übersicht", hint: "Contracts", icon: LayoutDashboard },
+    { id: "registry", label: "Registry", hint: "Bindings & Revisionen", icon: GitBranch },
     { id: "diagnostics", label: "Diagnose", hint: "Felder & Quellen", icon: Stethoscope },
     { id: "graph", label: "Signalgraph", hint: "Bindings & Fusion", icon: GitBranch },
     { id: "health", label: "Health", hint: "Revision & Status", icon: Activity },
   ];
   const titles: Record<AppView, string> = {
     overview: "Contract-Übersicht",
+    registry: "Registry & Bindings",
     diagnostics: "Feldbezogene Diagnose",
     graph: "Interner Signalgraph",
     health: "Health & Reconciliation",
   };
   let title = $derived(titles[store.activeView]);
-  let subline = $derived(store.previewMode ? "Lokale Vorschau · nicht live" : "Benni · Shadow-only · read-only");
+  let subline = $derived(store.previewMode ? "Lokale Vorschau · nicht live" : `${store.registry.profile} · Registry & Exchange · ${store.registry.dirty ? 'Ungespeicherte Änderungen' : 'Kein Autosave'}`);
 
   onMount(() => {
     const previewRequested = import.meta.env.DEV && new URLSearchParams(window.location.search).get("preview") === "fixture";
@@ -34,11 +37,13 @@
   });
 </script>
 
+<svelte:window onbeforeunload={(event) => { if (store.registry.dirty) { event.preventDefault(); event.returnValue = ''; } }} />
+
 <AppShell
   activeView={store.activeView}
   {navItems}
   {title}
-  eyebrow="Core Contracts / Benni"
+  eyebrow="Core Contracts"
   {subline}
   search={store.search}
   searchLabel="Contracts filtern"
@@ -48,12 +53,12 @@
   errorMessage={store.errorMessage}
   onViewChange={(view) => store.setView(view as AppView)}
   onSearch={(value) => store.setSearch(value)}
-  onRefresh={() => void store.refresh()}
-  scopeLabel="Shadow-only"
-  scopeHint="Keine Entities · keine Aktionen"
+  onRefresh={() => { void store.refresh(); if (store.activeView === 'registry') void store.registry.refresh(); }}
+  scopeLabel="Registry & Exchange"
+  scopeHint="Explizites Speichern · keine Actuation"
   versionLabel="contract payload v1"
 >
   {#snippet children()}
-    {#if store.activeView === "overview"}<OverviewView {store} />{:else if store.activeView === "diagnostics"}<DiagnosticsView {store} />{:else if store.activeView === "graph"}<GraphView {store} />{:else}<HealthView {store} />{/if}
+    {#if store.activeView === "overview"}<OverviewView {store} />{:else if store.activeView === "registry"}<RegistryView {store} />{:else if store.activeView === "diagnostics"}<DiagnosticsView {store} />{:else if store.activeView === "graph"}<GraphView {store} />{:else}<HealthView {store} />{/if}
   {/snippet}
 </AppShell>
