@@ -22,7 +22,10 @@ PROFILE_BENNI = "benni"
 PROFILE_ELTERN = "eltern"
 DEFAULT_PROFILE = PROFILE_BENNI
 SUPPORTED_PROFILES = (PROFILE_BENNI, PROFILE_ELTERN)
-SUPPORTED_CONFIG_PROFILES = (PROFILE_BENNI,)
+# Both profiles use the same ConfigEntry/bootstrap path.  The explicit
+# Published Opening pilot remains Benni-only in ConfigModel/published.py; that
+# pilot boundary must not be confused with normal profile activation.
+SUPPORTED_CONFIG_PROFILES = SUPPORTED_PROFILES
 
 STORAGE_KEY_PREFIX = f"{DOMAIN}.shadow_only"
 WS_REGISTERED = "_websocket_registered"

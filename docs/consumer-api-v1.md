@@ -100,6 +100,16 @@ Rohquelle verwenden. Die fachliche Abhängigkeit bleibt der Contract.
 eine eindeutige stabile Binding-ID auf. Kein Aufruf gibt interne Repository-
 oder Graphobjekte zurück.
 
+## Profil-Isolation
+
+Die ConsumerApi ist nicht profiliert dupliziert: dieselbe Instanz und dieselben
+DTOs bedienen `benni` und `eltern`. Jede `ConsumerRequirement`, jeder Snapshot-,
+Rollen- und Subscription-Aufruf trägt sein `ProfileId`; Runtime-Events werden
+vor dem Callback nach diesem Profil gefiltert. Deshalb darf derselbe Contract
+zum Beispiel als `media.activity.v1` in beiden Profilen existieren und je Profil
+unterschiedliche Werte, Revisionen und Lineage liefern. Ein Eltern-Consumer
+erhält niemals einen Benni-Snapshot oder ein Benni-Update.
+
 ## Eindeutige Fehler- und Statussemantik
 
 `lookup_contract()` liefert ein `ContractLookup` mit einem expliziten
@@ -228,6 +238,7 @@ zusätzlichen Persistenzpfad; PostgreSQL-, Draft-, Save-, OCC- und Last-Known-
 Good-Semantik bleiben vollständig in #16/#17.
 
 Nicht Bestandteil dieses Slices sind #18 Svelte Registry UX, #19 Fusion Editor,
-#21 Elternprofil, #22 Import/Export, #23 Diagnose-Repair-UX sowie CoreState-,
-MediaState-, Climate- und Blind-Cutovers. Diese Integrationen können die hier
-dokumentierte API in eigenen Folgeaufträgen verwenden.
+#22 Import/Export, #23 Diagnose-Repair-UX sowie CoreState-, MediaState-, Climate-
+und Blind-Cutovers. Das Elternprofil ist mit Issue #21 Teil derselben
+produktiven Registry-/Exchange-Foundation; Consumer-Cutovers bleiben trotzdem
+separate Folgeaufträge.

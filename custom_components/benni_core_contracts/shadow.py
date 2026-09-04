@@ -15,6 +15,7 @@ from .models import (
     RuntimeMode,
 )
 from .graph import SignalGraph
+from .profiles import profile_definition
 
 
 @dataclass(frozen=True)
@@ -63,8 +64,20 @@ class ShadowRuntime:
     ) -> None:
         if config.mode != RuntimeMode.SHADOW_ONLY and not _allow_published:
             raise ValueError("ShadowRuntime requires mode=shadow_only")
-        if config.profile != ProfileId.BENNI:
-            raise ValueError("parent_future is outside the Benni shadow runtime")
+        if not profile_definition(config.profile).shadow_runtime_allowed:
+            raise ValueError(
+                f"profile {config.profile.value} is not enabled for the shadow runtime"
+            )
+        graph_profile = graph.profile
+        if graph_profile is not None and graph_profile != config.profile:
+            raise ValueError("runtime graph profile does not match ConfigEntry profile")
+        mismatched_bindings = tuple(
+            binding.binding_id
+            for binding in graph.bindings()
+            if binding.profile_id != config.profile
+        )
+        if mismatched_bindings:
+            raise ValueError("runtime graph contains bindings from another profile")
         if config.mode == RuntimeMode.SHADOW_ONLY and config.entity_allowlist:
             raise ValueError("shadow_only runtime cannot carry a public allowlist")
         if config.mode == RuntimeMode.SHADOW_ONLY and config.published_contracts:

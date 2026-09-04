@@ -1,6 +1,9 @@
 """Versioned, non-activating source-binding evidence.
 
-This module is an evidence register, not a production configuration source.
+This module is a historical evidence register, not a production configuration
+source.  Its Benni ``benni_production``/Eltern ``parent_future`` scopes belong
+to the old evidence and Opening-pilot gates; the productive profile scopes are
+defined separately by ``profiles.py`` and the PostgreSQL registry.
 Its records deliberately cannot be converted into ConfigModel.bindings
 implicitly. A record may describe a raw Home Assistant source, a derived
 availability gate, or an evidence-only special case such as a cover position
@@ -70,7 +73,8 @@ class SourceBindingEvidence:
     source_entity is None when no concrete source is evidenced. A missing
     source is therefore represented by absence, never by a fabricated entity
     ID. production_binding_allowed is permanently false for this model so an
-    evidence matrix cannot silently populate a ConfigEntry.
+    evidence matrix cannot silently populate a ConfigEntry or a productive
+    RegistryPayload.
     """
 
     binding_id: str
@@ -275,11 +279,12 @@ class SourceBindingEvidenceMatrix:
         return tuple(record for record in self.records if record.contract_ref == contract_ref)
 
     def active_candidates(self) -> tuple[SourceBindingEvidence, ...]:
-        """Return Benni production-scope evidence candidates only.
+        """Return historical Benni-pilot evidence candidates only.
 
         The records remain evidence and cannot authorize activation. Parent
-        records are intentionally excluded even when they are concrete
-        candidates for a future shared-graph fixture.
+        records are intentionally excluded because this helper describes the
+        historical Benni Evidence Gate, not the current productive profile
+        admission path.
         """
 
         return tuple(

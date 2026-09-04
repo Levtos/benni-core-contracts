@@ -1,5 +1,9 @@
 # Geplante Benni-Installation: Shadow-only v1
 
+Diese Anleitung ist die historische Benni-only Installationsprozedur für den
+Release-Kandidaten `0.1.4`. Sie ist kein aktueller Ausschluss des
+profilisolierten `eltern`-Registry-/Runtime-Pfads aus Issue #21.
+
 Diese Anleitung beschreibt die Voraussetzungen und den kontrollierten Ablauf
 für die ausdrücklich read-only Shadow-Installation des stabilen Releases
 `0.1.4`.
@@ -14,9 +18,9 @@ Vor einer Installation müssen alle folgenden Punkte separat bestätigt sein:
 1. Der HACS-Eintrag `Levtos/benni-core-contracts` und der Tag `v0.1.4`
    zeigen auf denselben geprüften Commit. HACS muss benutzerseitig den
    stabilen Release auswählen.
-2. Die Installation erfolgt ausschließlich auf Benni/Einhornzentrale. Das
-   Elternprofil bleibt `parent_future` und wird nicht installiert oder
-   aktiviert.
+2. Für diese historische Prozedur erfolgt die Installation ausschließlich auf
+   Benni/Einhornzentrale. Das Elternprofil bleibt in diesem Release-
+   Gate `parent_future` und wird nicht installiert oder aktiviert.
 3. Der Zugriff auf HA ist autorisiert und read-only. Es werden keine Tokens,
    Cookies oder vollständigen State-Dumps im Repository abgelegt.
 4. Die erlaubten Kandidaten, Snapshot-Felder, Prüfzeit und
@@ -36,6 +40,10 @@ Entity-Allowlist werden abgewiesen. Der initiale Eintrag enthält keine
 SourceBindings; die Matrix wird nicht automatisch aktiviert. Explizite
 Bindings dürfen nur über einen separat geprüften Konfigurationsimport in die
 ConfigEntry gelangen und bleiben read-only.
+
+Für den aktuellen produktiven Registry-/Exchange-Bootstrap akzeptiert der
+ConfigEntry beide Profile. Historische Matrix-/Evidence-Datensätze bleiben
+auch dort nicht autoritativ.
 
 ## Verifikation nach einer freigegebenen Installation
 

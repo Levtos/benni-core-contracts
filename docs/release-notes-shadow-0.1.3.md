@@ -1,5 +1,9 @@
 # Benni Core Contracts `0.1.3`
 
+Historische Benni-only Release Notes. Die damalige `parent_future`-/
+`out_of_scope`-Grenze beschreibt nur diesen alten Shadow-Stand und ist durch
+Issue #21 für die aktuelle Registry-/Runtime-Foundation superseded.
+
 ## Release-Fix
 
 Dieser stabile Patch-Release synchronisiert die Paket-, Laufzeit- und

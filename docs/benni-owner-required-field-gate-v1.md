@@ -1,7 +1,11 @@
 # Benni Owner-/Required-Field-Gate v1
 
-Stand: 2026-07-23. Dieses Gate legt den produktiven Ziel-Scope und die
-Required-Feld-Regeln für `benni_core_contracts` fest. Es ist eine interne,
+> Historischer Evidence-Gate (Stand 2026-07-23). Die damalige Eltern-
+> `parent_future`-Grenze ist für diesen Gate-Scope erhalten, aber durch Issue
+> #21 als globale Registry-/Runtime-Zulassungssperre superseded.
+
+Dieses Gate legt den damaligen produktiven Ziel-Scope und die Required-Feld-
+Regeln für `benni_core_contracts` fest. Es ist eine interne,
 read-only Evidence-Prüfung innerhalb der Kette
 
 `SourceBinding -> AtomicSignal -> Fusion -> PublishedContract -> DiagnosticProjection`.
@@ -11,7 +15,7 @@ keine HA-Entity und trifft keine Policy- oder Actuation-Entscheidung.
 
 ## 1. Owner-Scope
 
-Benni ist der einzige produktive Zielhaushalt dieses Gates:
+Benni ist der einzige produktive Zielhaushalt dieses historischen Gates:
 
 | Profil | Aktivierungsscope | Produktives Ziel | ConfigEntry-/Binding-Aktivierung in v1 |
 | --- | --- | --- | --- |
@@ -27,6 +31,11 @@ nicht aktivierbar.
 Benni und Eltern verwenden weiterhin dieselben Contract-, Graph- und
 Fixture-Funktionen. Unterschiede liegen nur in Quellen, Räumen, Bindings und
 optionalen Fähigkeiten. Es gibt keinen getrennten Eltern-Logikbaum.
+
+Für die aktuelle produktive Registry gelten `benni` und `eltern` als Profile
+derselben Engine. Produktive Eltern-Bindings entstehen ausschließlich durch
+einen expliziten, validierten Registry-Write und nicht aus den Evidence-
+Datensätzen dieses Gates.
 
 ## 2. Required-Field-Entscheidung
 
@@ -150,9 +159,11 @@ Position verlangt Gerätezeitstempel; bei fehlender Evidence bleibt sie
 Policy-/Legacy-Evidence und bleibt `excluded`. Es gibt keinen Rollo-Zielwert,
 keine Privatsphäre-/Hitzeentscheidung und keine Actuation im Core-Contract.
 
-## 8. Eltern-Out-of-Scope-Gate
+## 8. Historisches Eltern-Out-of-Scope-Gate
 
-Eltern bleibt vollständig `parent_future`/`out_of_scope`:
+Für diesen historischen Evidence-Gate bleibt Eltern vollständig
+`parent_future`/`out_of_scope`; das ist keine aktuelle Registry-/Runtime-
+Sperre:
 
 - Eltern-Fixtures und gemeinsame Graph-Regeln bleiben zulässig;
 - Eltern erhält keine produktive SourceBinding;

@@ -15,7 +15,7 @@ from .const import (
     STORAGE_KEY_PREFIX,
 )
 from .graph import SignalGraph
-from .models import ConfigModel, ProfileId
+from .models import ConfigModel
 from .consumer_api import (
     ConsumerAccessStatus,
     ConsumerApi,
@@ -91,13 +91,10 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     config = ConfigModel.from_dict(entry.data, entry.options)
     if config.mode.value not in {MODE_SHADOW_ONLY, MODE_PUBLISHED}:
         return False
-    if config.profile != ProfileId.BENNI:
-        # Parent remains a shared fixture/profile only; it has no runtime
-        # ConfigEntry activation path in the Benni-only release candidate.
-        return False
-    if not profile_definition(config.profile).shadow_runtime_allowed:
-        # Parent remains a shared fixture/profile only; it has no runtime
-        # ConfigEntry activation path in the Benni-only owner gate.
+    profile = profile_definition(config.profile)
+    if not profile.config_activation_allowed or not profile.shadow_runtime_allowed:
+        # Profile metadata remains the single activation gate.  Historical
+        # Benni-only evidence/pilot gates do not block normal profile runtime.
         return False
     registry = hass.data.setdefault(DOMAIN, {})
     service = registry.get(REGISTRY_SERVICE_KEY)
@@ -135,6 +132,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
                 refresh()
 
         def on_registry_activation(snapshot: Any) -> None:
+            if snapshot.profile != config.profile:
+                return
             runtime.graph = snapshot.graph
             create_task = getattr(hass, "async_create_task", None)
             if callable(create_task):

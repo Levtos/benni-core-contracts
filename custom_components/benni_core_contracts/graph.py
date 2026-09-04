@@ -15,6 +15,7 @@ from .models import (
     DiagnosticProjection,
     FieldEvaluation,
     Fusion,
+    ProfileId,
     PublishedContract,
     RawObservation,
     SourceBinding,
@@ -83,8 +84,15 @@ class SignalGraph:
         *,
         registry: SchemaRegistry | None = None,
         now_factory=utc_now,
+        profile: ProfileId | str | None = None,
     ) -> None:
+        if profile is not None and not isinstance(profile, ProfileId):
+            try:
+                profile = ProfileId(str(profile))
+            except ValueError as err:
+                raise ValueError("graph profile must be benni or eltern") from err
         self.registry = registry or default_schema_registry()
+        self._profile = profile
         self._now_factory = now_factory
         self._bindings: dict[str, SourceBinding] = {}
         self._signals: dict[str, AtomicSignal] = {}
@@ -99,7 +107,22 @@ class SignalGraph:
     def revision(self) -> int:
         return self._revision
 
+    @property
+    def profile(self) -> ProfileId | None:
+        """Profile scope, when the graph was built from profile config.
+
+        Direct unit-test graphs may remain unscoped for backwards
+        compatibility; registry/runtime graphs are always profile-scoped.
+        """
+
+        return self._profile
+
     def add_binding(self, binding: SourceBinding) -> None:
+        if self._profile is not None and binding.profile_id != self._profile:
+            raise GraphError(
+                f"binding {binding.binding_id} belongs to profile "
+                f"{binding.profile_id.value}, graph belongs to {self._profile.value}"
+            )
         if binding.binding_id in self._bindings:
             raise GraphError(f"duplicate binding: {binding.binding_id}")
         self._bindings[binding.binding_id] = binding
@@ -1004,7 +1027,7 @@ class SignalGraph:
 
     @classmethod
     def from_config(cls, config: ConfigModel) -> "SignalGraph":
-        graph = cls()
+        graph = cls(profile=config.profile)
         for binding in config.bindings:
             graph.add_binding(binding)
         if config.mode.value == "published":

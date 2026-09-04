@@ -65,15 +65,15 @@ class OwnerRequiredFieldGateTests(unittest.TestCase):
             ProfileScope.BENNI_PRODUCTION,
         )
         self.assertTrue(profile_definition(ProfileId.BENNI).productive_target)
-        self.assertEqual(SUPPORTED_CONFIG_PROFILES, ("benni",))
+        self.assertEqual(SUPPORTED_CONFIG_PROFILES, ("benni", "eltern"))
         self.assertTrue(profile_definition(ProfileId.BENNI).shadow_runtime_allowed)
         self.assertEqual(
             profile_definition(ProfileId.ELTERN).activation_scope,
-            ProfileScope.PARENT_FUTURE,
+            ProfileScope.ELTERN_PRODUCTION,
         )
-        self.assertFalse(profile_definition(ProfileId.ELTERN).productive_target)
-        self.assertFalse(profile_definition(ProfileId.ELTERN).config_activation_allowed)
-        self.assertFalse(profile_definition(ProfileId.ELTERN).shadow_runtime_allowed)
+        self.assertTrue(profile_definition(ProfileId.ELTERN).productive_target)
+        self.assertTrue(profile_definition(ProfileId.ELTERN).config_activation_allowed)
+        self.assertTrue(profile_definition(ProfileId.ELTERN).shadow_runtime_allowed)
 
     def test_required_field_set_is_exactly_the_current_benni_schema_set(self) -> None:
         gate = benni_owner_required_gate_fixture()

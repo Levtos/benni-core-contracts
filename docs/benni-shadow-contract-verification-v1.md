@@ -1,14 +1,17 @@
 # Benni Read-Only Shadow Contract Verification Gate v1
 
-Stand: 2026-07-23. Dieses Gate prüft ausschließlich das Profil `benni` gegen
+Stand: 2026-07-23. Dieses historische Gate prüft ausschließlich das Profil
+`benni` gegen
 explizit vorgelegte, read-only Source-Evidence. Es erzeugt weder eine
 produktive SourceBinding noch eine ConfigEntry-Aktivierung, HA-Entity,
 Allowlist-Freigabe, Service, Actuation, Policy-Entscheidung oder
 Consumer-Umstellung.
 
-Eltern bleibt vollständig `parent_future` und `out_of_scope`. Gemeinsame
-Schema-, Graph- und Fixture-Logik darf Eltern enthalten; ein Eltern-Profil oder
-eine Eltern-Binding wird vor der Shadow-Auswertung abgewiesen.
+Innerhalb dieser historischen Shadow-Auswertung bleibt Eltern vollständig
+`parent_future` und `out_of_scope`. Gemeinsame Schema-, Graph- und Fixture-
+Logik darf Eltern enthalten; ein Eltern-Profil oder eine Eltern-Binding wird
+vor dieser Benni-Evidence-Auswertung abgewiesen. Das ist keine Sperre für die
+produktive RegistryRuntime.
 
 ## Einordnung und Datenfluss
 

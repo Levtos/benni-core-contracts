@@ -175,15 +175,35 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
         self.assertEqual(runtime.public_entity_ids(("sensor.any_candidate",)), ())
         self.assertEqual(runtime.config.mode, RuntimeMode.SHADOW_ONLY)
 
-    def test_parent_config_entry_is_rejected_without_activation(self) -> None:
+    def test_parent_config_entry_uses_the_shared_shadow_runtime(self) -> None:
         hass = SimpleNamespace(data={})
-        self.assertFalse(asyncio.run(async_setup_entry(hass, self._entry(profile="eltern"))))
-        self.assertEqual(hass.data, {})
-        with self.assertRaises(ValueError):
-            ShadowRuntime(
-                ConfigModel(profile=ProfileId.ELTERN, mode=RuntimeMode.SHADOW_ONLY),
-                SignalGraph(),
-            )
+        entry = self._entry(profile="eltern")
+        with (
+            patch(
+                "custom_components.benni_core_contracts.HomeAssistantStorage",
+                return_value=_EmptyStorage(),
+            ),
+            patch(
+                "custom_components.benni_core_contracts.async_register_websocket_api",
+                new=AsyncMock(),
+            ),
+            patch(
+                "custom_components.benni_core_contracts.async_attach_source_listeners",
+                new=AsyncMock(),
+            ),
+            patch(
+                "custom_components.benni_core_contracts.async_setup_view",
+                new=AsyncMock(),
+            ),
+        ):
+            self.assertTrue(asyncio.run(async_setup_entry(hass, entry)))
+
+        runtime = hass.data[DOMAIN][entry.entry_id]
+        self.assertIsInstance(runtime, ShadowRuntime)
+        self.assertEqual(runtime.config.profile, ProfileId.ELTERN)
+        self.assertEqual(runtime.graph.bindings(), ())
+        self.assertEqual(runtime.public_entity_ids(("sensor.any_candidate",)), ())
+        self.assertEqual(runtime.config.mode, RuntimeMode.SHADOW_ONLY)
 
     def test_invalid_mode_is_rejected_before_any_runtime_setup(self) -> None:
         hass = SimpleNamespace(data={})

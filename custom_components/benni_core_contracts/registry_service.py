@@ -232,7 +232,10 @@ class RegistryRuntime:
             payload,
             schema_registry=self.schema_registry,
         )
-        graph = SignalGraph(registry=self.schema_registry)
+        graph = SignalGraph(
+            registry=self.schema_registry,
+            profile=normalized.profile,
+        )
         for binding in normalized.bindings:
             graph.add_binding(binding)
         graph.add_fusions(normalized.fusions)
@@ -252,6 +255,25 @@ class RegistryRuntime:
             )
         if graph is None:
             _normalized, graph = self.prepare(revision.payload)
+        graph_profile = graph.profile
+        if graph_profile is not None and graph_profile != revision.profile:
+            raise RuntimeActivationError(
+                "registry graph profile does not match the revision",
+                details={
+                    "revision_profile": revision.profile.value,
+                    "graph_profile": graph_profile.value,
+                },
+            )
+        mismatched_bindings = tuple(
+            binding.binding_id
+            for binding in graph.bindings()
+            if binding.profile_id != revision.profile
+        )
+        if mismatched_bindings:
+            raise RuntimeActivationError(
+                "registry graph contains bindings from another profile",
+                details={"binding_ids": list(mismatched_bindings)},
+            )
         snapshot = RegistryRuntimeSnapshot(
             profile=revision.profile,
             revision=revision,
@@ -282,7 +304,8 @@ class RegistryRuntime:
         return tuple(self._active.values())
 
     def add_listener(self, listener: Callable[[RegistryRuntimeSnapshot], None]) -> None:
-        self._listeners.append(listener)
+        if listener not in self._listeners:
+            self._listeners.append(listener)
 
     def remove_listener(self, listener: Callable[[RegistryRuntimeSnapshot], None]) -> None:
         if listener in self._listeners:
@@ -475,6 +498,24 @@ class RegistryDomainService:
             raise BackendUnavailableError(
                 "registry repository returned an invalid active result",
                 details={"operation": "load_active"},
+            )
+        if result.profile != profile_id:
+            raise RegistryServiceError(
+                "registry repository returned another profile",
+                code="profile_mismatch",
+                details={
+                    "requested_profile": profile_id.value,
+                    "returned_profile": result.profile.value,
+                },
+            )
+        if result.revision is not None and result.revision.profile != profile_id:
+            raise RegistryServiceError(
+                "registry revision belongs to another profile",
+                code="profile_mismatch",
+                details={
+                    "requested_profile": profile_id.value,
+                    "revision_id": result.revision.id,
+                },
             )
         if result.revision is not None:
             try:
@@ -1249,6 +1290,17 @@ class RegistryDomainService:
             profile=draft.profile,
             created_by=actor_id,
         )
+        if not isinstance(candidate, RegistryRevision):
+            raise BackendUnavailableError(
+                "registry repository returned an invalid draft revision",
+                details={"operation": "create_revision"},
+            )
+        if candidate.profile != draft.profile:
+            raise RegistryServiceError(
+                "registry repository returned another profile",
+                code="profile_mismatch",
+                details={"revision_id": candidate.id},
+            )
         try:
             active = await self._repository_call(
                 "activate_revision",
@@ -1266,6 +1318,12 @@ class RegistryDomainService:
             raise BackendUnavailableError(
                 "registry repository returned an invalid active revision",
                 details={"operation": "activate_revision"},
+            )
+        if active.profile != draft.profile:
+            raise RegistryServiceError(
+                "activated registry revision belongs to another profile",
+                code="profile_mismatch",
+                details={"revision_id": active.id},
             )
         try:
             self.runtime.activate(active, graph, source=RegistrySource.POSTGRESQL)
@@ -1333,7 +1391,23 @@ class RegistryDomainService:
     ) -> tuple[RegistryRevision, ...]:
         selected = _profile_id(profile) if profile is not None else None
         result = await self._repository_call("list_revisions", selected)
-        return tuple(result)
+        revisions = tuple(result)
+        if any(not isinstance(item, RegistryRevision) for item in revisions):
+            raise BackendUnavailableError(
+                "registry repository returned invalid revision history",
+                details={"operation": "list_revisions"},
+            )
+        if selected is not None:
+            mismatched = tuple(
+                item.id for item in revisions if item.profile != selected
+            )
+            if mismatched:
+                raise RegistryServiceError(
+                    "registry history contains another profile",
+                    code="profile_mismatch",
+                    details={"revision_ids": list(mismatched)},
+                )
+        return revisions
 
     async def list_revisions(
         self,
@@ -1372,6 +1446,17 @@ class RegistryDomainService:
             target.id,
             expected_base_revision=expected_base_revision,
         )
+        if not isinstance(rolled_back, RegistryRevision):
+            raise BackendUnavailableError(
+                "registry repository returned an invalid rollback revision",
+                details={"operation": "rollback_revision"},
+            )
+        if rolled_back.profile != profile_id:
+            raise RegistryServiceError(
+                "rollback returned another profile",
+                code="profile_mismatch",
+                details={"revision_id": rolled_back.id},
+            )
         self.runtime.activate(
             rolled_back,
             graph,

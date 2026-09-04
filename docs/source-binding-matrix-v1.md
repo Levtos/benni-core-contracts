@@ -17,7 +17,11 @@ historical_source_entity und production_binding_allowed=false.
 
 `active_candidates()` liefert ausschließlich Benni-Records. Eltern-Records
 bleiben mit `parent_future_records()` für gemeinsame Fixtures und
-Graph-Evidence sichtbar, aber vollständig `out_of_scope`.
+Graph-Evidence sichtbar, aber innerhalb dieses historischen Evidence-Artefakts
+vollständig `out_of_scope`. Die Matrix ist nicht autoritativ für die produktive
+Registry: `benni` und `eltern` werden dort als getrennte Profile derselben
+Engine über explizite Registry-Payloads geführt; kein Matrix-Record wird
+automatisch aktiviert.
 
 Die meisten im Matrixfeld `LIVE_VERIFIZIERT` dokumentierten Snapshots stammen
 aus dem vorherigen Source-Binding-Evidence-Gate. Für den ersten Published-
@@ -39,7 +43,7 @@ retained State-Change-Event.
 | Retained MQTT | true bedeutet, dass der Transportpfad retained MQTT zulassen kann; ein solches Ereignis bleibt suspect/stale |
 | Pfad | Wertpfad in state oder attributes.*; last_changed/last_reported sind nur unter der HA-Event-Regel verwendbar |
 | Fallback | bei physischen Zuständen und Positionen zwingend reject; Availability darf als technische Aussage safe_default=false verwenden |
-| Scope | `benni_production` ist der einzige produktive Ziel-Scope dieses Gates; `parent_future` ist nicht aktivierbar |
+| Scope | `benni_production` ist der einzige produktive Ziel-Scope dieses historischen Gates; `parent_future` ist in diesem Artefakt nicht aktivierbar |
 | Historische Quelle | alte oder widersprüchliche IDs stehen nur hier und niemals als aktuelle `source_entity` |
 | Disposition | candidate ist Evidence-Kandidat; nur Benni liegt im aktiven Scope. derived, conflict, open und excluded sind nicht aktivierbare Ergebnisse |
 

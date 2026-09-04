@@ -32,6 +32,11 @@ payload contains `bindings`, `fusions`, `contract_instances`,
 `consumer_overrides`, and `registry_metadata`, with no runtime signals,
 freshness, quality, diagnostics, or secrets.
 
+Every revision, active row, rollback target and LKG cache entry is keyed by its
+explicit `profile`. Payload construction and graph validation reject a binding
+or contract instance from the other profile. A missing or unavailable Eltern
+registry therefore cannot fall back to Benni's revision, and vice versa.
+
 ## Revision lifecycle
 
 `create_revision()` persists a new `draft` and never changes the active row.
@@ -68,9 +73,9 @@ runtime `StorageCodec` envelope.
 
 Runtime state, restore, quality, and freshness events have no write path into
 the repository. The existing HA runtime store continues to reject `config` and
-`config_entry` data. The ConfigEntry remains a small bootstrap for the current
-runtime mode/pilot; it is not a registry persistence fallback and no YAML/Git
-write is introduced.
+`config_entry` data. The ConfigEntry remains a small bootstrap for the selected
+`benni` or `eltern` runtime mode/pilot; it is not a registry persistence
+fallback and no YAML/Git write is introduced.
 
 ## Deliberate follow-up boundaries
 

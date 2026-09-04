@@ -166,6 +166,16 @@ class RegistryPayload:
         bindings = tuple(self.bindings)
         if any(not isinstance(binding, SourceBinding) for binding in bindings):
             raise ValueError("registry bindings must be SourceBinding objects")
+        mismatched_bindings = tuple(
+            binding.binding_id
+            for binding in bindings
+            if binding.profile_id != self.profile
+        )
+        if mismatched_bindings:
+            raise ValueError(
+                "registry bindings must belong to the selected profile: "
+                + ", ".join(mismatched_bindings)
+            )
         binding_ids = [binding.binding_id for binding in bindings]
         if len(set(binding_ids)) != len(binding_ids):
             raise ValueError("registry binding IDs must be unique")
@@ -182,6 +192,17 @@ class RegistryPayload:
             label="contract_instances",
             identity_key="contract_id",
         )
+        mismatched_instances = tuple(
+            str(instance.get("contract_id") or instance.get("id"))
+            for instance in contract_instances
+            if "profile" in instance
+            and ProfileId(str(instance["profile"])) != self.profile
+        )
+        if mismatched_instances:
+            raise ValueError(
+                "registry contract instances must belong to the selected profile: "
+                + ", ".join(mismatched_instances)
+            )
         overrides = self.consumer_overrides
         if not isinstance(overrides, Mapping):
             raise ValueError("consumer_overrides must be an object")
@@ -471,6 +492,7 @@ def validate_registry_payload(
         profile_definition(normalized.profile).validate_bindings(normalized.bindings)
         graph = SignalGraph(
             registry=schema_registry or default_schema_registry(),
+            profile=normalized.profile,
         )
         for binding in normalized.bindings:
             graph.add_binding(binding)
