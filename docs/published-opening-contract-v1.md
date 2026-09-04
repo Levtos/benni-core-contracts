@@ -1,5 +1,10 @@
 # Benni Published Opening Contract v1
 
+Dieses Dokument beschreibt den historischen, bewusst Benni-only gehaltenen
+Published-Opening-Pilot. Seine Sicherheitsgrenzen bleiben für diese einzelne
+Entity-Ausnahme erhalten und blockieren nicht den produktiven, internen
+Registry-/Consumer-Betrieb des Elternprofils aus Issue #21.
+
 ## Zweck und Freigabegrenze
 
 Dieses Dokument beschreibt den ersten ausdrücklich veröffentlichbaren
@@ -123,5 +128,7 @@ ob ein echtes State-Change-Event einen fachlichen Zustand liefert.
 ## Grenzen
 
 Es gibt weiterhin keine Services, Actuation, Policy-Imports, Migration,
-Consumer-Umstellung, Core-Devices-Änderung, Lock-/Cover-Veröffentlichung oder
-Eltern-Aktivierung. Eltern bleibt `parent_future`/`out_of_scope`.
+Consumer-Umstellung, Core-Devices-Änderung oder Lock-/Cover-Veröffentlichung
+in diesem Pilot. Eine Eltern-Aktivierung ist innerhalb dieses historischen
+Published-Piloten nicht vorgesehen; `eltern` bleibt im produktiven internen
+Registry-/Runtime-Pfad dennoch zugelassen.

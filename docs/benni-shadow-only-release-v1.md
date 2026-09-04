@@ -1,6 +1,11 @@
 # Benni Shadow-Only Release v1
 
-Stand: 2026-07-28. Dieser installierbare Shadow-only-Release trägt die Version
+> Historischer Release-/Evidence-Gate (Stand 2026-07-28). Seine Benni-only-
+> Installationsgrenzen beschreiben den damaligen `0.1.4`-Kandidaten und sind
+> keine globale Sperre für den aktuellen profilisolierten Registry-/Runtime-
+> Pfad aus Issue #21.
+
+Dieser installierbare Shadow-only-Release trägt die Version
 `0.1.4`, den HA-Domain-Namen `benni_core_contracts` und den einzigen
 Runtime-Modus `shadow_only`.
 
@@ -28,9 +33,11 @@ werden nicht automatisch in eine ConfigEntry übernommen. Ein leerer
 
 ## Harte Grenzen
 
-- Nur `profile=benni` darf als Runtime-ConfigEntry gestartet werden.
-- `parent_future`/Eltern bleibt vollständig `out_of_scope`; der gemeinsame
-  Graph-/Fixture-Code darf Eltern weiterhin beschreiben.
+- Für diesen historischen Release darf nur `profile=benni` als Runtime-
+  ConfigEntry gestartet werden.
+- `parent_future`/Eltern bleibt innerhalb dieses historischen Gates
+  `out_of_scope`; der gemeinsame Graph-/Fixture-Code darf Eltern weiterhin
+  beschreiben.
 - Ein fehlendes oder unbekanntes `mode` wird abgewiesen. Es gibt keinen
   impliziten Shadow-Default.
 - Der einzige akzeptierte Modus ist `mode=shadow_only`. `published` und das
@@ -43,6 +50,11 @@ werden nicht automatisch in eine ConfigEntry übernommen. Ein leerer
   `lock.aqara_smart_lock_u200` wird als Quelle abgelehnt; die aktuelle
   Kandidaten-ID `lock.flur_aqara_smart_lock_u200` benötigt weiterhin
   Registry-/Ownership-/Gerätezeit-Revalidierung.
+
+Der aktuelle produktive Registry-/Exchange-Pfad verwendet dagegen dieselbe
+ShadowRuntime für `benni` und `eltern`. Historische Evidence dieses Release-
+Gates bleibt nicht autoritativ und wird nicht automatisch als Registry-
+Konfiguration aktiviert.
 
 ## Read-only State-Beobachtung
 

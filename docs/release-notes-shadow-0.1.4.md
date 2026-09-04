@@ -1,5 +1,9 @@
 # Benni Core Contracts `0.1.4`
 
+Diese Release Notes sind historische Notizen zum Benni-only Shadow-/Published-
+Pilot. Die darin genannte Eltern-Grenze beschreibt nicht die aktuelle
+profilisolierte Registry-/Runtime-Freigabe aus Issue #21.
+
 ## Published-Options-Flow-Fix
 
 Dieser Patch-Release korrigiert den Home-Assistant-spezifischen Published-
@@ -19,5 +23,7 @@ Core Contracts bleibt standardmäßig Shadow-only, read-only und erzeugt ohne
 explizite Published-Freigabe **0 HA-Entities**. Es gibt keine Services,
 Actuation, Policy-Imports, Migration oder Consumer-Umstellung. Die mögliche
 Pilot-Entity bleibt `sensor.benni_opening_kitchen_patio_door` und wird durch
-die Paketveröffentlichung nicht automatisch aktiviert. Eltern bleibt
-`parent_future`/`out_of_scope`.
+die Paketveröffentlichung nicht automatisch aktiviert. Innerhalb dieses
+historischen Piloten bleibt Eltern `parent_future`/`out_of_scope`; produktive
+Eltern-Bindings entstehen heute ausschließlich über einen expliziten
+Registry-Write.

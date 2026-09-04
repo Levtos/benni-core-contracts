@@ -45,6 +45,7 @@ PROFILE_DEFINITIONS = {
         ),
         activation_scope=ProfileScope.BENNI_PRODUCTION,
         productive_target=True,
+        config_activation_allowed=True,
         shadow_runtime_allowed=True,
     ),
     ProfileId.ELTERN: ProfileDefinition(
@@ -55,8 +56,10 @@ PROFILE_DEFINITIONS = {
             "weather_environment",
             "technical_device",
         ),
-        activation_scope=ProfileScope.PARENT_FUTURE,
-        productive_target=False,
+        activation_scope=ProfileScope.ELTERN_PRODUCTION,
+        productive_target=True,
+        config_activation_allowed=True,
+        shadow_runtime_allowed=True,
     ),
 }
 

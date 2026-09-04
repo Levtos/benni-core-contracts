@@ -29,6 +29,12 @@ kompletten validierten Snapshot aus. Die getrennte, read-only Consumer-Grenze
 beobachtet diesen Holder; sie ist in [Consumer API v1](consumer-api-v1.md)
 dokumentiert und führt keinen Consumer-Cutover aus.
 
+Der Service ist für `benni` und `eltern` derselbe Codepfad. Drafts, aktive
+Revisionen, Runtime-Graphen und Rollbacks werden immer mit dem angeforderten
+Profil verknüpft; ein Binding, eine Revision oder ein Runtime-Snapshot des
+anderen Profils wird abgewiesen. Historische `parent_future`-Evidence ist kein
+produktiver Draft und wird niemals automatisch in die Registry übernommen.
+
 Wenn ein Repository-Service über `async_setup_registry_service()` in Home
 Assistant injiziert wird, wird sein Runtime-Holder bei einem ConfigEntry-Start
 für den aktiven Registry-Stand verwendet. PostgreSQL-Verbindung und Credentials

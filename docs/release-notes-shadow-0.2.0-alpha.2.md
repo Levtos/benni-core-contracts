@@ -1,5 +1,9 @@
 # Shadow-only Alpha `0.2.0-alpha.2`
 
+Historische Benni-only Release Notes. Die damalige `parent_future`-/
+`out_of_scope`-Grenze beschreibt nur diesen alten Shadow-Stand und ist durch
+Issue #21 für die aktuelle Registry-/Runtime-Foundation superseded.
+
 ## Fix
 
 - Das Core-Contracts-Panel berechnet den Cache-Parameter jetzt ausschließlich

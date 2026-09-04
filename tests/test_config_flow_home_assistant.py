@@ -52,6 +52,9 @@ class _FakeEntitySelector:
 
 
 class _FakeConfigFlow:
+    def __init__(self):
+        self.unique_id = None
+
     def __init_subclass__(cls, **kwargs):
         kwargs.pop("domain", None)
         super().__init_subclass__(**kwargs)
@@ -62,7 +65,8 @@ class _FakeConfigFlow:
     def async_create_entry(self, *, title, data):
         return {"type": "create_entry", "title": title, "data": data}
 
-    async def async_set_unique_id(self, _unique_id):
+    async def async_set_unique_id(self, unique_id):
+        self.unique_id = unique_id
         return None
 
     def _abort_if_unique_id_configured(self):
@@ -111,6 +115,23 @@ def _selector_for(schema: _FakeSchema, field: str) -> _FakeEntitySelector:
 
 
 class HomeAssistantConfigFlowRegressionTests(unittest.TestCase):
+    def test_shadow_bootstrap_is_profile_specific_and_accepts_both_profiles(self) -> None:
+        try:
+            with _home_assistant_imports():
+                loaded = importlib.reload(config_flow)
+                for profile in ("benni", "eltern"):
+                    flow = loaded.BenniCoreContractsConfigFlow()
+                    result = asyncio.run(
+                        flow.async_step_user(
+                            {"profile": profile, "mode": "shadow_only"}
+                        )
+                    )
+                    self.assertEqual(flow.unique_id, f"benni_core_contracts:{profile}")
+                    self.assertEqual(result["type"], "create_entry")
+                    self.assertEqual(result["data"]["profile"], profile)
+        finally:
+            importlib.reload(config_flow)
+
     def test_published_options_transition_builds_home_assistant_selectors(self) -> None:
         try:
             with _home_assistant_imports():

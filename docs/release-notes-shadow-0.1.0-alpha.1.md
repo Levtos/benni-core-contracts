@@ -1,5 +1,9 @@
 # Shadow-only Alpha `0.1.0-alpha.1`
 
+Historische Release Notes des Benni-only Pre-Releases. Die damalige
+Eltern-Grenze beschreibt nur diesen alten Release und ist durch Issue #21 für
+die aktuelle Registry-/Runtime-Foundation superseded.
+
 ## Zweck
 
 Der erste installierbare Pre-Release von `benni_core_contracts` dient

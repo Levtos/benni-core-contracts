@@ -1,5 +1,9 @@
 # Shadow-only Alpha `0.2.0-alpha.1`
 
+Historische Release Notes des Benni-only Shadow-/UX-Stands. Die damalige
+Eltern-Grenze ist durch Issue #21 für die aktuelle Registry-/Runtime-
+Foundation superseded; diese Alpha selbst bleibt unverändert historisch.
+
 ## Core-Contracts-UX
 
 Diese Alpha ergänzt die read-only Foundation aus control#57 um eine reale,

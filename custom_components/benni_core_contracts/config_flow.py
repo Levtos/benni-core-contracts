@@ -1,4 +1,4 @@
-"""ConfigEntry flow for shadow mode and the explicit Benni pilot gate."""
+"""ConfigEntry flow for shared profiles and the explicit Benni pilot gate."""
 
 from __future__ import annotations
 
@@ -69,7 +69,9 @@ if HA_AVAILABLE:
 
         async def async_step_user(self, user_input: dict[str, Any] | None = None):
             if user_input is not None:
-                await self.async_set_unique_id(DOMAIN)
+                # Permit one bootstrap entry per profile while still rejecting
+                # duplicate entries for the same profile.
+                await self.async_set_unique_id(f"{DOMAIN}:{user_input['profile']}")
                 self._abort_if_unique_id_configured()
                 if user_input["mode"] == "published":
                     self._selected_profile = user_input["profile"]

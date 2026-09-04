@@ -43,9 +43,15 @@ class ProfileId(str, Enum):
 
 
 class ProfileScope(str, Enum):
-    """Activation scope for a profile in the current architecture gate."""
+    """Profile scopes used by production runtime and historical evidence.
+
+    ``PARENT_FUTURE`` is retained for the historical source-binding/evidence
+    register.  It is not the activation scope of the productive ``eltern``
+    profile.
+    """
 
     BENNI_PRODUCTION = "benni_production"
+    ELTERN_PRODUCTION = "eltern_production"
     PARENT_FUTURE = "parent_future"
 
 

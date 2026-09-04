@@ -21,10 +21,12 @@ Die vollständige Matrix steht in
 Datensatz ist source_binding_matrix_v1() in
 custom_components/benni_core_contracts/source_binding_evidence.py.
 
-Das nachgelagerte Owner-/Required-Field-Gate für diesen Evidence-Slice steht
+Das nachgelagerte, historische Owner-/Required-Field-Gate für diesen
+Evidence-Slice steht
 in [benni-owner-required-field-gate-v1.md](benni-owner-required-field-gate-v1.md).
-Es beschränkt den produktiven Ziel-Scope auf Benni; Eltern bleibt
-`parent_future`/`out_of_scope`.
+Es beschränkt den Ziel-Scope dieses Evidence-Gates auf Benni; Eltern bleibt
+innerhalb dieses Gate-Artefakts `parent_future`/`out_of_scope`. Diese
+historische Evidence-Grenze ist keine aktuelle Registry-/Runtime-Sperre.
 
 Die nachgelagerte feldgenaue, read-only Benni-Auswertung steht in
 [benni-shadow-contract-verification-v1.md](benni-shadow-contract-verification-v1.md).
@@ -93,10 +95,10 @@ Die Matrix enthält für available, wo das Schema es ausdrücklich erlaubt, eine
 interne safe_default=false-Availability-Projektion. Das ist keine Aussage über
 einen physischen Zustand.
 
-`active_candidates()` bedeutet ab diesem Gate ausschließlich
-Benni-Produktions-Scope. Eltern-Evidence bleibt über
+`active_candidates()` bedeutet in diesem historischen Evidence-Artefakt
+ausschließlich Benni-Produktions-Scope. Eltern-Evidence bleibt über
 `parent_future_records()` für gemeinsame Fixtures sichtbar, ist aber nicht
-aktivierbar.
+aktivierbar und wird nie automatisch in die produktive Registry übernommen.
 
 ## Profilgrenze
 

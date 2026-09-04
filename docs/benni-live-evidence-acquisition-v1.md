@@ -7,9 +7,10 @@ sanitizierter State-Snapshot mit belastbarer Zeit- und Ownership-Evidence
 vorliegt. Es aktiviert keine SourceBinding, verändert keine ConfigEntry,
 veröffentlicht keinen Contract und erzeugt keine HA-Entity.
 
-Eltern bleibt vollständig "parent_future" und "out_of_scope". Die gemeinsame
-Graph-, Schema- und Fixture-Logik bleibt erhalten; dieses Gate erzeugt keinen
-separaten Eltern-Pfad.
+Für dieses historische Benni-Evidence-Gate bleibt Eltern vollständig
+"parent_future" und "out_of_scope". Die gemeinsame Graph-, Schema- und
+Fixture-Logik bleibt erhalten; dieses Gate erzeugt keinen separaten Eltern-Pfad
+und ist keine produktive Registry-Zulassungssperre.
 
 ## Ergebnis dieses Laufs
 

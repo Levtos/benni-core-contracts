@@ -79,13 +79,18 @@ Required-Felder mit gültiger, frischer, sicherer und vollständiger Evidence
 belegt sind. Es ist eine read-only Prüfprojektion ohne Veröffentlichung,
 Entity-Projektion, Consumer-Cutover oder Policy-/Actuation-Entscheidung.
 
-Das nachgelagerte Owner-/Required-Field-Gate v1 begrenzt diesen Scope auf
-Benni (`benni_production`). Eltern bleibt als gemeinsames Profil im Graphen,
-aber vollständig `parent_future`/`out_of_scope`; es erhält keine produktive
-SourceBinding, Allowlist, ConfigEntry-Aktivierung oder Published Entity. Die
+Das nachgelagerte Owner-/Required-Field-Gate v1 ist ein historischer
+Benni-Evidence-/Pilot-Gate (`benni_production`). Seine Eltern-
+`parent_future`/`out_of_scope`-Grenze bleibt für diese historische Evidence
+erhalten, ist aber keine globale Runtime- oder Registry-Zulassungssperre. Die
 verbindlichen Required-Feld-Regeln und `pass`/`degraded`/`blocked`-Semantik
-stehen in
+dieses Gates stehen in
 [Benni Owner-/Required-Field-Gate v1](benni-owner-required-field-gate-v1.md).
+
+Für den produktiven Registry-/Exchange-Pfad sind `benni` und `eltern`
+gleichwertige Profile derselben Engine. Sie verwenden dieselben Graph-,
+Contract-, Fusion-, Quality- und Freshness-Implementierungen; nur Bindings,
+Instanzen, Revisionen und Runtime-Werte sind profilbezogen.
 
 Das Benni Read-Only Shadow Contract Verification Gate v1 erzeugt danach eine
 feldgenaue Evidence-Projektion aus Contract, aktiver Quelle und expliziter
@@ -135,9 +140,9 @@ außerhalb dieses Repositories.
 
 ## ConfigEntry und Storage
 
-Die ConfigEntry trägt `ConfigModel` Version 1 als schlanken HA-Bootstrap:
-Profil, Modus, exakte Allowlist, freigegebene Contract-IDs und die expliziten
-Pilot-SourceBindings. Der Flow verlangt immer einen expliziten Modus.
+Die ConfigEntry trägt `ConfigModel` Version 1 als schlanken HA-Bootstrap für
+beide Profile: Profil, Modus, exakte Allowlist, freigegebene Contract-IDs und
+die expliziten Pilot-SourceBindings. Der Flow verlangt immer einen expliziten Modus.
 `shadow_only` ist der sichere Default ohne Allowlist und ohne Bindings.
 `published` ist nur für Benni, exakt
 `benni.opening.kitchen_patio_door`, exakt
@@ -187,8 +192,10 @@ gibt keine implizite Entity für:
 
 Der erste konkrete Published-Pilot ist in
 [Published Opening Contract v1](published-opening-contract-v1.md)
-dokumentiert. Lock, Cover-Position, alle anderen Contract-Typen, Eltern,
-Consumer-Cutovers und Policies bleiben außerhalb der Veröffentlichung.
+dokumentiert und bleibt als historische Benni-only Entity-Ausnahme begrenzt.
+Lock, Cover-Position, alle anderen Contract-Typen, Consumer-Cutovers und
+Policies bleiben außerhalb der Veröffentlichung; `eltern` bleibt dabei nicht
+außerhalb der internen Registry-/Consumer-Foundation.
 
 ## Contract-Versionen
 

@@ -69,26 +69,39 @@ Home Assistant or created the pilot entity live. A later Benni-only test must
 select both verified kitchen patio-door contact sources explicitly before any
 entity-platform setup is allowed.
 
+## Profiles v1 (#21)
+
+`benni` and `eltern` are configuration profiles of the same Core-Contracts
+engine. They share the SignalGraph, contract schemas, fusion, quality,
+freshness, RegistryDomainService, RegistryRuntime and ConsumerApi; only their
+registry payloads, revisions, bindings, instances and resulting runtime state
+are profile-specific. The ConfigEntry is a bootstrap for either profile, while
+PostgreSQL remains the canonical registry and the profile-specific LKG remains
+the fallback.
+
 The Source Binding Evidence Gate contains only versioned, read-only evidence
 records. It does not populate the ConfigEntry or activate any binding.
-The Benni Owner-/Required-Field-Gate v1 is the only in-scope profile for this
-slice; it is not a production activation. Eltern remains
-`parent_future`/out_of_scope and cannot be activated.
+The Benni Owner-/Required-Field-Gate, Shadow Contract Verification Gate and
+Live Evidence Acquisition Gate are historical Benni evidence/pilot gates. Their
+`parent_future`/`out_of_scope` records remain useful evidence, but are not
+current profile admission and cannot activate productive bindings.
 The Shadow Contract Verification Gate evaluates explicit Benni source evidence
 only; absent current live evidence remains blocked and does not create a
 ConfigEntry activation or an entity.
 The Live Evidence Acquisition Gate documents the current read-only probe and
 keeps every source OPEN when state API authentication or ownership evidence is
-missing. The ConfigEntry requires `profile=benni` and an explicit
-`mode=shadow_only`; there is no implicit mode default, no parent activation,
-and no public entity allowlist in the Shadow default. The separate Published
+missing. The current ConfigEntry accepts either `profile=benni` or
+`profile=eltern` with an explicit `mode=shadow_only`; there is no implicit mode
+default and no public entity allowlist in the Shadow default. The separate Published
 pilot is limited to the exact kitchen-patio Opening Contract described below.
 
-The release is not a general production Contract publication. Benni is the
-only permitted runtime profile; Eltern remains `parent_future`/`out_of_scope`.
+The historical `v0.1.4` release is not a general public Contract publication.
+The current registry/runtime foundation supports both profiles internally.
 Room Climate, Weather/Environment and Technical Device results remain
-internal and diagnostic. Only the explicitly configured Opening pilot may be
-published; Lock and Cover position remain evidence-only.
+internal and diagnostic. Only the explicitly configured Benni Opening pilot
+may be published; Lock and Cover position remain evidence-only. Historical
+Source-Binding Evidence is never authoritative product configuration and is
+never promoted automatically into a productive RegistryPayload.
 
 ## Local verification
 

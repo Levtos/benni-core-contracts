@@ -320,7 +320,7 @@ class LiveEvidenceAcquisitionTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             assess_live_source(parent, None, checked_at=LIVE_FIXTURE_NOW)
-        self.assertEqual(SUPPORTED_CONFIG_PROFILES, ("benni",))
+        self.assertEqual(SUPPORTED_CONFIG_PROFILES, ("benni", "eltern"))
 
     def test_snapshot_sanitisation_rejects_secret_like_attributes(self) -> None:
         with self.assertRaises(ValueError):

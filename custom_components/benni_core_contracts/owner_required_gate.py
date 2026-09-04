@@ -1,9 +1,10 @@
-"""Benni-only Owner-/Required-Field-Gate v1.
+"""Historical Benni-only Owner-/Required-Field-Gate v1.
 
-This gate defines the production owner scope and evaluates required-field
-evidence without activating a ConfigEntry, publishing an entity, or making a
-policy decision. Eltern remains part of the shared schema/graph test surface,
-but is explicitly outside the production scope of this gate.
+This gate defines the former Benni Evidence/Pilot scope and evaluates
+required-field evidence without activating a ConfigEntry, publishing an
+entity, or making a policy decision.  Its Eltern exclusion is deliberately
+retained for historical evidence compatibility; it is not a restriction on
+the productive profile/registry/runtime path introduced by Issue #21.
 """
 
 from __future__ import annotations
@@ -695,6 +696,9 @@ def _evaluate_spec(
 
 
 def parent_profile_is_out_of_scope(profile_id: ProfileId) -> bool:
-    """Return whether a profile is deliberately excluded from this gate."""
+    """Return whether a profile is excluded from this historical gate.
+
+    This predicate must not be used as a global product/runtime profile gate.
+    """
 
     return profile_id == ProfileId.ELTERN

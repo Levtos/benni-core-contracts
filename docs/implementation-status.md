@@ -1,6 +1,6 @@
 # Implementierungsstatus – GitHub Issue #1
 
-Stand: 2026-09-03, Benni Shadow-only Release `0.1.4`,
+Stand: 2026-09-05, Benni Shadow-only Release `0.1.4`,
 Published Options-Flow-Fix und Published Opening Contract v1 lokal
 implementiert; Live-Aktivierung weiterhin ausstehend.
 
@@ -18,6 +18,37 @@ laufende Einhornzentrale wurde nur read-only geprüft: Die Integration ist
 geladen, die MQTT-Rohquellen für den Küchen-Terrassentür-Pilot sind vorhanden,
 aber der aktuelle ConfigEntry bleibt Shadow-only. Es wurde keine Live-
 ConfigEntry, Registry oder Home-Assistant-Datei verändert.
+
+## Issue #21 – Profiles v1
+
+Issue #21 hebt `eltern` aus der historischen `parent_future`-/`out_of_scope`-
+Evidence-Grenze in den produktiven Registry-/Exchange-Pfad. `benni` und
+`eltern` sind Konfigurationsprofile derselben Core-Contracts-Engine, keine
+getrennten Implementierungen: beide verwenden denselben SignalGraph,
+Contract-Schemas, Fusion-, Quality-, Freshness-, RegistryRuntime- und
+ConsumerApi-Code. Profilbezogen bleiben ausschließlich Bindings,
+Contract-Instanzen, Revisionen, Drafts, LKG-Einträge und Runtime-Werte.
+
+Der ConfigEntry-/Bootstrap-Pfad akzeptiert beide Profile. PostgreSQL und der
+Last-Known-Good-Fallback sind strikt nach Profil isoliert; historische
+Source-Binding-Evidence autorisiert weiterhin keine produktive Konfiguration
+und wird niemals automatisch aktiviert. Der bestehende Benni Published-
+Opening-Pilot bleibt als separater historischer Pilot-Gate begrenzt.
+
+### Technische Verifikation für Issue #21
+
+Der synthetische Abnahmepfad prüft getrennte Benni-/Eltern-Payloads, Revisionen,
+Rollback/LKG, Runtime-Graphen, Contract-Werte, Rollenauflösung und Consumer-
+Subscriptions. Die Prüfung ist lokal und synthetisch; sie ist kein HA-Live-
+Test und kein Deployment.
+
+```text
+python -m pytest -q                         # 191 passed, 6 subtests passed
+python -m unittest discover -s tests -p "test_*.py"  # 191 tests OK
+python -m compileall -q custom_components tests scripts  # OK
+python scripts/validate_repository.py       # repository_validation_ok
+git diff --check                             # OK
+```
 
 ## Geänderte Dateien
 
@@ -133,7 +164,9 @@ Neu im Repository `core-contracts`:
   Source-Binding-Evidence. Matrix v1 enthält 81 Datensätze, davon 43 im
   `benni_production`- und 38 im `parent_future`-Scope. 27 Benni-Kandidaten
   sind im aktiven Evidence-Scope sichtbar; kein Record autorisiert Aktivierung.
-- `ProfileScope` mit `benni_production` für Benni und `parent_future` für Eltern.
+- `ProfileScope` mit `benni_production` und `eltern_production` für den
+  produktiven Registry-/Runtime-Pfad; `parent_future` bleibt ausschließlich
+  der historische Source-Binding-/Evidence-Scope.
 - `BenniOwnerRequiredFieldGate` v1 mit elf expliziten Required-Field-Regeln
   aus den vier aktuellen Contract-Schemata. Lock und Cover bleiben außerhalb
   des aktuellen Required-Schemas als Evidence-only-Fälle.
@@ -228,13 +261,15 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   `unknown` und verwenden `reject`.
 - Benni und Eltern verwenden dieselben Matrix-/Fixture-Funktionen; nur
   Quellen, Räume, Bindings und Fähigkeiten unterscheiden sich.
-- Produktive ConfigEntry-Bindings bleiben **0**; öffentliche Entities bleiben
-  **0**.
+- Der ConfigEntry bleibt ein schlanker Bootstrap ohne automatisch übernommene
+  Evidence-Bindings; produktive Bindings liegen ausschließlich in der
+  profilisolierten PostgreSQL-Registry. Öffentliche Entities bleiben **0**.
 
-## Benni Owner-/Required-Field-Gate v1
+## Benni Owner-/Required-Field-Gate v1 (historischer Evidence-Gate)
 
-- Benni ist der einzige produktive Ziel-Scope (`benni_production`); Eltern ist
-  vollständig `parent_future`/`out_of_scope`.
+- Dieser Gate bleibt auf den historischen Benni-Evidence-Scope
+  (`benni_production`) begrenzt; seine Eltern-`parent_future`-/`out_of_scope`-
+  Aussage ist keine globale Registry-/Runtime-Sperre.
 - Required-Felder sind festgelegt: drei raumbezogene Climate-Temperaturen und
   Availability-Gates, Opening-State und Availability, Outdoor-Temperatur und
   Availability sowie technische Rollo-Availability.
@@ -260,7 +295,8 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   weiterverwendet.
 - Synthetische Tests belegen pass, missing/unavailable/unknown, stale,
   retained MQTT, Restore, Konflikt, `first_healthy`-Fallback, feldlokale
-  Weather-Degradierung, Lock-Blocker, Eltern-Ablehnung und die Boundary.
+  Weather-Degradierung, Lock-Blocker, die historische Eltern-Ablehnung dieses
+  Gates und die Boundary.
 - Lock und Cover-Position bleiben Evidence-only. Die alte Lock-ID wird nicht
   als aktuelle Binding akzeptiert; die kanonische Kandidaten-ID bleibt ohne
   neue Ownership-/Gerätezeit-Evidence `blocked`/`conflict`.
@@ -300,9 +336,10 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
   das historische `shadow` wird nicht als Default oder Runtime-Modus
   akzeptiert. `published` ist ein separater, explizit eingegrenzter Pilot und
   kein Default.
-- Der ConfigEntry-Flow bietet ausschließlich `profile=benni` an. Eltern bleibt
-  `parent_future`/`out_of_scope`; gemeinsamer Graph-/Fixture-Code wird nicht
-  in einen zweiten Eltern-Logikbaum aufgeteilt.
+- Der aktuelle ConfigEntry-Flow bietet `profile=benni` und `profile=eltern` an.
+  Die historische `parent_future`-/`out_of_scope`-Aussage gehört nur zu diesem
+  alten Release-Candidate-/Evidence-Gate; gemeinsamer Graph-/Fixture-Code wird
+  nicht in einen zweiten Eltern-Logikbaum aufgeteilt.
 - Der initiale Shadow-ConfigEntry hat keine SourceBindings und keine
   Entity-Allowlist. Matrix-/Fixture-Evidence wird nicht automatisch zur
   produktiven Konfiguration.
@@ -326,9 +363,11 @@ vollständige Feld-/Fixture-/Boundary-Audit ist in
 ## Shadow-Only Release-Candidate-Prüfung
 
 Die zusätzliche Boundary-Suite prüft explizit fehlenden Modus, Ablehnung von
-`published`, leere Default-Bindings, leere Entity-Allowlist, Eltern-
-Ablehnung, Setup ohne ConfigEntry, Setup mit leerem Shadow-ConfigEntry,
-fehlende Live-Daten ohne erfundene Werte sowie die Paket-/HACS-Version.
+`published`, leere Default-Bindings, leere Entity-Allowlist, die historischen
+Benni-Evidence-Grenzen, Setup ohne ConfigEntry, Setup mit leerem Shadow-
+ConfigEntry, fehlende Live-Daten ohne erfundene Werte sowie die Paket-/HACS-
+Version. Die produktive Eltern-Aktivierung wird separat über die
+profilisolierte Registry-/Runtime-/Consumer-Suite geprüft.
 
 Aktueller reproduzierbarer Teststand:
 
@@ -397,9 +436,10 @@ Safe-Default-Aussage in den Dokumenten wurde entfernt; die gemeinsame
   Entity daher live nicht vorhanden. Eine Benni-seitige Published-
   ConfigEntry-Auswahl und der normale Reload/Restart sind für die echte
   Entity-/Event-Prüfung noch erforderlich.
-- Eltern bleibt vollständig `parent_future`/`out_of_scope`; Lock, Cover-
-  Position, andere Contracts und alle Consumer bleiben außerhalb dieses
-  Gates.
+- Die historische Gate-Aussage `parent_future`/`out_of_scope` bleibt für diese
+  Evidence-Projektion erhalten; sie blockiert weder die produktive Eltern-
+  Registry noch die interne ConsumerApi. Lock, Cover-Position, andere
+  Contracts und Consumer-Cutovers bleiben außerhalb dieses historischen Gates.
 
 ## Abgrenzung zu control#56 / Notes 488–489
 

@@ -2,13 +2,18 @@
 
 Stand: 2026-07-31. Release-Version: `0.1.4`.
 
+Dieses Dokument beschreibt ausschließlich die historische Release-Identität
+und die damaligen Benni-Evidence-Grenzen. Issue #21 supersediert die daraus
+abgeleitete globale Eltern-Sperre für den aktuellen profilisolierten
+Registry-/Runtime-/Consumer-Pfad.
+
 ## Release-Identität
 
 - GitHub-HACS-Repository: `Levtos/benni-core-contracts`
 - Git-Tag: `v0.1.4`
 - HA-Domain: `benni_core_contracts`
 - einziger aktivierbarer Modus: `shadow_only`
-- einziges produktives Shadow-Profil: `benni`
+- einziges produktives Shadow-Profil dieses historischen Tags: `benni`
 
 Der Tag ist ein installierbarer vollständiger Shadow-only-Release. Er darf
 über HACS bezogen werden, bleibt wegen der ausdrücklich read-only/shadow-only
@@ -23,9 +28,11 @@ registriert, keine Actuation ausgeführt und keine Policy importiert. Es gibt
 keine automatische SourceBinding-Aktivierung, keine Registry-Änderung, keine
 Migration und keinen Consumer-Cutover.
 
-`parent_future`/Eltern bleibt vollständig `out_of_scope`. Gemeinsamer
-Graph-, Schema- und Fixture-Code darf vorhanden sein; ein Eltern-ConfigEntry
-wird nicht aktiviert. Lock und Cover-Position bleiben Evidence-only.
+Innerhalb dieses historischen Tags bleibt `parent_future`/Eltern vollständig
+`out_of_scope`. Gemeinsamer Graph-, Schema- und Fixture-Code darf vorhanden
+sein; ein Eltern-ConfigEntry wurde in diesem Release nicht aktiviert. Lock und
+Cover-Position bleiben Evidence-only. Die aktuelle gemeinsame Engine kann
+`benni` und `eltern` dagegen über die produktive Registry getrennt betreiben.
 
 ## HACS-Voraussetzungen
 
