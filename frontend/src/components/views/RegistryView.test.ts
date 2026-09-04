@@ -33,4 +33,11 @@ describe('Registry component', () => {
     expect(text).toContain('Read-only'); expect(text).toContain('Aktualisieren');
     expect(text).not.toContain('Binding anlegen'); expect(text).not.toContain('Änderungen verwerfen');
   });
+  it('renders fusion strategy and explicit input selection without a write on opening',()=>{
+    const store=show(); flushSync(()=>store.registry.selectFusion(null));
+    expect(document.body.textContent).toContain('Fusion in Entwurf übernehmen');
+    expect(document.querySelector('option[value="all_true"]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Fusion-Inputs');
+    expect(store.registry.draft).toBeNull();
+  });
 });

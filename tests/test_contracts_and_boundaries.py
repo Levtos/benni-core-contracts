@@ -36,6 +36,7 @@ class ContractAndBoundaryTests(unittest.TestCase):
             [(schema.schema_id, schema.version) for schema in registry.all()],
             [
                 ("opening", 1),
+                ("presence", 1),
                 ("room_climate", 1),
                 ("technical_device", 1),
                 ("weather_environment", 1),

@@ -12,6 +12,7 @@ export interface Draft { draft_id: string; profile: Profile; base_revision: numb
 export interface Validation { valid: boolean; errors: { code: string; message: string; path?: string }[] }
 export interface RequirementUsage { consumer_id: string; contract_id: string | null; role: string | null; status: string }
 export interface RegistryView {
+  schemas?: {schema_id: string; version: number; fields: {name: string; value_type: string}[]}[];
   registry: { profile: Profile; revision: Revision | null; source: string; health: string; reason: string | null; used_last_known_good: boolean };
   revisions: Revision[]; history_error: string | null; requirements: RequirementUsage[];
 }
@@ -27,6 +28,9 @@ export class RegistryEditor {
   draft = $state<Draft | null>(null);
   editor = $state<EditableBinding | null>(null);
   original = $state<EditableBinding | null>(null);
+  fusionEditor = $state<Fusion | null>(null);
+  originalFusion = $state<Fusion | null>(null);
+  fusionSchema = $state('');
   filter = $state('');
   changed = $state(false);
   busy = $state(false);
@@ -39,7 +43,10 @@ export class RegistryEditor {
   hass = $state.raw<HassLike | null>(null);
   private generation = 0;
   get admin() { return this.hass?.user?.is_admin === true; }
-  get dirty() { return this.changed || !!this.fallbackError || (this.editor !== null && JSON.stringify(this.editor) !== JSON.stringify(this.original)); }
+  get fusionDirty() { return this.fusionEditor !== null && JSON.stringify(this.fusionEditor) !== JSON.stringify(this.originalFusion); }
+  get dirty() { return this.changed || this.fusionDirty || !!this.fallbackError || (this.editor !== null && JSON.stringify(this.editor) !== JSON.stringify(this.original)); }
+  get fusions() { return this.draft?.payload.fusions ?? this.view?.registry.revision?.payload.fusions ?? []; }
+  get instances() { return this.draft?.payload.contract_instances ?? this.view?.registry.revision?.payload.contract_instances ?? []; }
   get bindings() { return this.draft?.payload.bindings ?? this.view?.registry.revision?.payload.bindings ?? []; }
   get filteredBindings() { const q = this.filter.toLowerCase(); return this.bindings.filter(b => `${b.binding_id} ${b.display_name ?? ''} ${b.entity_id} ${b.field}`.toLowerCase().includes(q)); }
   get base() { return this.draft?.base_revision ?? this.editBase ?? this.view?.registry.revision?.revision ?? 0; }
@@ -139,15 +146,45 @@ export class RegistryEditor {
     this.changed = true; this.validation = null;
   }); }
   async validate() { await this.run(async () => {
-    await this.applyEditor(); const draft = await this.ensureDraft();
+    await this.applyEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
     this.validation = (await this.request<{validation: Validation}>('draft/validate', {draft_id: draft.draft_id})).validation;
   }); }
   async save() { await this.run(async () => {
-    await this.applyEditor(); const draft = await this.ensureDraft();
+    await this.applyEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
     await this.request('draft/save', {draft_id: draft.draft_id, expected_base_revision: draft.base_revision});
     this.clear(); this.notice = 'Revision gespeichert und aktiviert.'; await this.read();
   }); }
-  private clear() { this.draft = null; this.editor = null; this.original = null; this.changed = false; this.validation = null; this.editBase = null; this.fallbackText = 'null'; this.fallbackError = ''; }
+  private clear() { this.draft = null; this.editor = null; this.original = null; this.fusionEditor = null; this.originalFusion = null; this.changed = false; this.validation = null; this.editBase = null; this.fallbackText = 'null'; this.fallbackError = ''; }
+  selectFusion(fusion: Fusion | null) {
+    if (!this.admin || this.busy) return;
+    if (this.fusionDirty) { this.notice='Offene Fusion zuerst in den Entwurf übernehmen oder verwerfen.'; return; }
+    this.editBase ??= this.base;
+    this.originalFusion=fusion ? copy(fusion) : null;
+    this.fusionEditor=fusion ? copy(fusion) : {fusion_id:`fusion.${crypto.randomUUID()}`, contract_id:'', field:'', strategy:'first_healthy', input_binding_ids:[], input_fusion_ids:[], consumer_ids:[]};
+    const instance=this.instances.find(i=>i.contract_id===fusion?.contract_id);
+    this.fusionSchema=instance ? `${instance.schema_id}:${instance.schema_version ?? 1}` : '';
+  }
+  private async applyFusionEditor() {
+    if (!this.fusionEditor || !this.fusionDirty) return;
+    const fusion=copy(this.fusionEditor);
+    if (this.originalFusion && fusion.fusion_id!==this.originalFusion.fusion_id) throw new RegistryError('validation_error','Fusion-ID ist geschützt.');
+    const draft=await this.ensureDraft();
+    if (!this.instances.some(i=>i.contract_id===fusion.contract_id)) {
+      const schema=this.view?.schemas?.find(s=>`${s.schema_id}:${s.version}`===this.fusionSchema);
+      if (!schema) throw new RegistryError('validation_error','Für eine neue Contract-Instanz ein vorhandenes Schema auswählen.');
+      this.draft=(await this.request<{draft:Draft}>('contract_instance/create',{draft_id:draft.draft_id,instance:{contract_id:fusion.contract_id,schema_id:schema.schema_id,schema_version:schema.version,profile:this.profile}})).draft;
+      this.changed=true;
+    }
+    this.draft=(await this.request<{draft:Draft}>(this.originalFusion?'fusion/update':'fusion/create',{draft_id:draft.draft_id, ...(this.originalFusion?{fusion_id:fusion.fusion_id}:{}), fusion})).draft;
+    this.originalFusion=copy(fusion); this.changed=true; this.validation=null;
+  }
+  async applyFusion() { await this.run(()=>this.applyFusionEditor()); }
+  async removeFusion(fusion: Fusion) { await this.run(async()=>{
+    const draft=await this.ensureDraft();
+    this.draft=(await this.request<{draft:Draft}>('fusion/delete',{draft_id:draft.draft_id,fusion_id:fusion.fusion_id})).draft;
+    this.changed=true; this.validation=null;
+    if (this.fusionEditor?.fusion_id===fusion.fusion_id) { this.fusionEditor=null; this.originalFusion=null; }
+  }); }
   async discard() { await this.run(async () => {
     if (this.draft) await this.request('draft/discard', {draft_id: this.draft.draft_id});
     this.clear(); this.notice = 'Entwurf verworfen. Aktive Registry unverändert.'; await this.read();

@@ -6,6 +6,9 @@ from typing import Any
 
 from .const import (
     DOMAIN,
+    WS_REGISTRY_FUSION_CREATE,
+    WS_REGISTRY_FUSION_UPDATE,
+    WS_REGISTRY_FUSION_DELETE,
     CONSUMER_API_KEY,
     REGISTRY_SERVICE_KEY,
     WS_COMMANDS,
@@ -85,7 +88,8 @@ async def registry_view(service, consumer_api, profile):
                     })
     return {"registry": public_load_result_dict(loaded),
             "revisions": [public_revision_dict(item) for item in history],
-            "history_error": history_error, "requirements": requirements}
+            "history_error": history_error, "requirements": requirements,
+            "schemas": [schema.as_dict() for schema in service.runtime.schema_registry.all()]}
 
 
 def select_read_runtime(registry: dict, *, entry_id=None, profile=None):
@@ -344,6 +348,14 @@ async def async_dispatch_registry_write(
 
     profile = msg.get("profile", "benni")
     draft_id = msg.get("draft_id")
+    if command in (WS_REGISTRY_FUSION_CREATE, WS_REGISTRY_FUSION_UPDATE):
+        return await service.async_put_fusion(
+            msg["draft_id"], msg["fusion"],
+            fusion_id=msg.get("fusion_id") if command == WS_REGISTRY_FUSION_UPDATE else None,
+            actor_id=actor_id,
+        )
+    if command == WS_REGISTRY_FUSION_DELETE:
+        return await service.async_delete_fusion(msg["draft_id"], msg["fusion_id"], actor_id=actor_id)
     if command == WS_REGISTRY_GET_ACTIVE:
         return await service.async_read_active(profile)
     if command == WS_REGISTRY_LIST_REVISIONS:
@@ -499,6 +511,11 @@ async def async_register_registry_write_api(
         },
     }
 
+    field_schemas.update({
+        WS_REGISTRY_FUSION_CREATE: {vol.Required("draft_id"): str, vol.Required("fusion"): dict},
+        WS_REGISTRY_FUSION_UPDATE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str, vol.Required("fusion"): dict},
+        WS_REGISTRY_FUSION_DELETE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str},
+    })
     for command, fields in field_schemas.items():
         schema = {
             vol.Required("id"): int,

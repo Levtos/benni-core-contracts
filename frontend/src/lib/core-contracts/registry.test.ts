@@ -23,6 +23,10 @@ function fixture(admin = true) {
     else if (cmd === 'binding/update') { draft.payload.bindings = draft.payload.bindings.map(b => b.binding_id === msg.binding_id ? clone(msg.binding as EditableBinding) : b); result = {draft}; }
     else if (cmd === 'binding/delete') { draft.payload.bindings = draft.payload.bindings.filter(b => b.binding_id !== msg.binding_id); result = {draft}; }
     else if (cmd === 'binding/set_enabled') { draft.payload.bindings.find(b => b.binding_id === msg.binding_id)!.enabled = msg.enabled as boolean; result = {draft}; }
+    else if (cmd === 'contract_instance/create') { draft.payload.contract_instances.push(clone(msg.instance as Record<string,unknown>)); result={draft}; }
+    else if (cmd === 'fusion/create') { draft.payload.fusions.push(clone(msg.fusion as RegistryPayload['fusions'][number])); result={draft}; }
+    else if (cmd === 'fusion/update') { draft.payload.fusions=draft.payload.fusions.map(f=>f.fusion_id===msg.fusion_id?clone(msg.fusion as RegistryPayload['fusions'][number]):f); result={draft}; }
+    else if (cmd === 'fusion/delete') { draft.payload.fusions=draft.payload.fusions.filter(f=>f.fusion_id!==msg.fusion_id); result={draft}; }
     else if (cmd === 'draft/validate') result = {validation: {valid: true, errors: []}};
     else if (cmd === 'draft/save') { view.registry.revision!.payload = clone(draft.payload); view.registry.revision!.revision++; result = {revision:view.registry.revision}; }
     else if (cmd === 'draft/discard') result = {discarded:true};
@@ -118,5 +122,19 @@ describe('Registry UI lifecycle', () => {
   it('derives consumer usage read-only from declared roles', async () => {
     const {editor,views} = fixture(); views.benni.requirements=[{consumer_id:'core_state',contract_id:null,role:'activity',status:'healthy'}];
     await editor.refresh(); enter(editor); expect(editor.consumers(editor.editor!)).toEqual(['core_state']);
+  });
+  it('creates a fusion and typed instance in the same draft, edits strategy and deletes without autosave', async()=>{
+    const {editor,views,calls}=fixture(); views.eltern.schemas=[{schema_id:'presence',version:1,fields:[{name:'present',value_type:'boolean'}]}];
+    await editor.switchProfile('eltern'); editor.selectFusion(null); editor.fusionSchema='presence:1';
+    Object.assign(editor.fusionEditor!,{contract_id:'household',field:'present',strategy:'any_true',input_binding_ids:['mutter','vater']});
+    expect(editor.dirty).toBe(true); await editor.applyFusion(); expect(editor.error).toBeNull();
+    expect(editor.fusions[0].strategy).toBe('any_true'); expect(editor.instances[0].profile).toBe('eltern');
+    editor.fusionEditor!.strategy='all_true'; await editor.applyFusion(); expect(editor.fusions[0].strategy).toBe('all_true');
+    await editor.removeFusion(editor.fusions[0]); expect(editor.fusions).toHaveLength(0);
+    expect(calls.some(c=>c.type==='benni_core_contracts/registry/draft/save')).toBe(false);
+  });
+  it('does not lose dirty fusion inputs on profile switch or refresh', async()=>{
+    const {editor}=fixture(); await editor.refresh(); editor.selectFusion(null); editor.fusionEditor!.contract_id='household';
+    await editor.switchProfile('eltern'); await editor.refresh(); expect(editor.profile).toBe('benni'); expect(editor.fusionEditor!.contract_id).toBe('household');
   });
 });

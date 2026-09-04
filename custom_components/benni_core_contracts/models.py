@@ -206,9 +206,13 @@ class Fusion:
             raise ValueError("fusion_id, contract_id, and field are required")
         if not self.input_binding_ids and not self.input_fusion_ids:
             raise ValueError("Fusion needs at least one input binding or fusion")
+        for inputs in (self.input_binding_ids, self.input_fusion_ids):
+            if len(set(inputs)) != len(inputs):
+                raise ValueError("Fusion input IDs must be unique")
         if self.strategy not in {
             "first_healthy",
             "any_true",
+            "all_true",
             "latest",
             "opening_contacts",
             "opening_is_open",

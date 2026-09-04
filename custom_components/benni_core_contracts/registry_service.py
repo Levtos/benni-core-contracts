@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from .contracts import default_schema_registry
 from .graph import SignalGraph
-from .models import ProfileId, SourceBinding
+from .models import Fusion, ProfileId, SourceBinding
 from .quality import utc_now
 from .registry import (
     ConcurrencyConflict,
@@ -735,6 +735,43 @@ class RegistryDomainService:
             valid=True,
             graph_probe_revision=graph.revision,
         )
+
+    async def async_put_fusion(self, draft_id, data, *, fusion_id=None, actor_id=None):
+        """Create/update a Fusion in the existing draft with atomic topology validation."""
+        draft = await self.async_get_draft(draft_id, actor_id=actor_id)
+        allowed = {"fusion_id", "contract_id", "field", "input_binding_ids",
+                   "input_fusion_ids", "strategy", "consumer_ids"}
+        if not isinstance(data, Mapping) or set(data) - allowed:
+            raise RegistryServiceError("unknown fusion fields", code="validation_error")
+        existing = next((f for f in draft.payload.fusions if f.fusion_id == fusion_id), None)
+        if fusion_id is not None and existing is None:
+            raise InvalidReferenceError("fusion does not exist in this draft")
+        merged = existing.as_dict() if existing else {}
+        merged.update(data)
+        try:
+            fusion = Fusion.from_dict(merged)
+            if fusion_id is not None and fusion.fusion_id != fusion_id:
+                raise InvalidReferenceError("fusion_id is stable and cannot be changed")
+            if fusion_id is None and any(f.fusion_id == fusion.fusion_id for f in draft.payload.fusions):
+                raise InvalidReferenceError("duplicate fusion ID")
+            payload = replace(draft.payload, fusions=tuple(
+                fusion if f.fusion_id == fusion_id else f for f in draft.payload.fusions
+            ) + (() if existing else (fusion,)))
+            self._prepare_payload(payload)
+        except RegistryServiceError:
+            raise
+        except (KeyError, TypeError, ValueError, RegistryValidationError) as err:
+            raise DraftValidationError("invalid fusion", issues=(_validation_issue(err),)) from err
+        return await self._replace_draft_payload(draft, payload, actor_id=actor_id)
+
+    async def async_delete_fusion(self, draft_id, fusion_id, *, actor_id=None):
+        draft = await self.async_get_draft(draft_id, actor_id=actor_id)
+        if not any(f.fusion_id == fusion_id for f in draft.payload.fusions):
+            raise InvalidReferenceError("fusion does not exist in this draft")
+        if any(fusion_id in f.input_fusion_ids for f in draft.payload.fusions):
+            raise InvalidReferenceError("fusion is referenced by another fusion")
+        payload = replace(draft.payload, fusions=tuple(f for f in draft.payload.fusions if f.fusion_id != fusion_id))
+        return await self._replace_draft_payload(draft, payload, actor_id=actor_id)
 
     async def validate_draft(
         self,

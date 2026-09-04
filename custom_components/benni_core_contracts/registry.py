@@ -537,7 +537,9 @@ def validate_registry_payload(
                     if instance.get("schema_version") is not None
                     else None,
                 )
-                schema.field(fusion.field)
+                field_schema = schema.field(fusion.field)
+                if fusion.strategy in {"any_true", "all_true"} and field_schema.value_type.value != "boolean":
+                    raise ValueError("boolean fusion requires a boolean contract field")
     except (GraphError, KeyError, TypeError, ValueError) as err:
         raise RegistryValidationError(str(err)) from err
     return normalized
