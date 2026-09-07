@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     { name: 'portable-html-newlines', transformIndexHtml: { order: 'post', handler: (html) => html.replace(/\r/g, '') } },
     svelte({
+      preprocess: { markup: ({ content }) => ({ code: content.replace(/\r\n?/g, '\n') }) },
       compilerOptions: {
         css: "injected",
       },
