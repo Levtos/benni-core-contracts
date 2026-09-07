@@ -94,8 +94,9 @@ Benni-Quellen begrenzt. Der interne Betriebsmodus `shadow_only` bedeutet weiterh
 - [Registry-UX](docs/registry-ux-v1.md), [Fusion-Editor](docs/fusion-editor-v1.md)
 - [Import/Export](docs/registry-import-export-v1.md), [Diagnose → Repair](docs/diagnostic-repair-v1.md)
 - [Release Notes 0.2.0](docs/release-notes-0.2.0.md)
+- [TLS/Event-Loop Quickfix 0.2.1](docs/release-notes-0.2.1.md)
 
-Version: **0.2.0** (Foundation v1, kein SemVer-1.0-Release). Technische Tests,
+Version: **0.2.1** (Foundation v1, kein SemVer-1.0-Release). Technische Tests,
 GitHub-Release und HA-Live-Abnahme sind getrennte Gates. Installation, Reload,
 Deployment und echte HA-Verhaltensprüfung bleiben Benni vorbehalten.
 CoreState-/MediaState-/Climate-/Blind-Cutovers sind separate Aufträge.
