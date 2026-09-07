@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+/* Explicit roots make the release independent of developer/global gitignore. */
+@source "../app";
+@source "../components";
+@source "../lib";
 
 :root {
   color-scheme: dark;
