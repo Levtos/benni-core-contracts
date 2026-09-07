@@ -3,6 +3,7 @@
 @source "../app";
 @source "../components";
 @source "../lib";
+@source "../lib/core-contracts/*.ts";
 
 :root {
   color-scheme: dark;
