@@ -1,113 +1,121 @@
-# Benni Core Contracts — Shadow-only `0.1.4` / Registry Backend-Service v1
+# Core Contracts — Registry & Exchange Foundation
 
-`benni_core_contracts` is a new Home Assistant foundation integration built
-around an internal signal graph. This installable stable release is deliberately
-`shadow_only`: it can read explicitly configured source states, evaluate
-versioned internal contracts, and expose diagnostics through a read-only
-WebSocket foundation. It does not create Home Assistant entities, call
-services, make policy decisions, or perform actuation. A separate, explicit
-Published pilot exists only for the single Benni `opening.v1` contract and is
-never enabled by installation or by the default ConfigEntry.
+Core Contracts (`benni_core_contracts`) verbindet Home-Assistant-Integrationen
+über stabile, versionierte fachliche Contracts: Rohquelle/Owner → Core Contracts
+→ Consumer. Die Foundation normalisiert Daten, fusioniert Quellen und liefert
+Quality, Freshness, Health und Diagnose. Sie trifft keine Policy-Entscheidung
+und führt keine Actuation oder HA-Service-Aufrufe aus.
 
-The implementation is intentionally independent of historical device,
-combined and master models. The public boundary is explicit and exact: only
-`sensor.benni_opening_kitchen_patio_door` may be projected after the Benni
-Published pilot has been configured with the two verified raw sources. Raw
-sources, AtomicSignals, Fusionen and diagnostics never become entities.
+## Registry, Bindings und Contracts
 
-Issue #16 adds the storage foundation for the registry: PostgreSQL is the
-canonical store for JSONB registry revisions, with atomic activation,
-optimistic concurrency, and a validated local Last-Known-Good fallback. Issue
-#17 adds the draft/validate/save/discard/rollback service and an admin-only
-validated write boundary. The existing ConfigEntry remains a bootstrap for the
-current runtime; it is not used as a second registry store. Consumer API,
-subscriptions, and the typed internal exchange boundary are implemented in
-Issue #20. Registry UX and consumer cutovers remain follow-up work.
+PostgreSQL ist der kanonische Registry-Store. Profilbezogene JSONB-Revisionen
+enthalten SourceBindings, Fusionen, Contract-Instanzen und Metadaten. ConfigEntry
+bleibt Bootstrap; Last Known Good (LKG) hält die letzte gültige Konfiguration
+bei einem Datenbankausfall verfügbar. LKG ist keine frische Messung.
 
-## Status
+Ein SourceBinding verbindet eine stabile technische ID und Rolle mit einer
+konkreten HA-Entity. Beim Gerätewechsel von HomePod zu Sonos ändert der Benutzer
+die Entity, nicht die logische ID oder Consumer-Konfiguration. Anzeigenamen sind
+editierbar; technische IDs und Profil sind geschützt.
 
-This is the installable Shadow-only release tracked in
-[GitHub issue #1](https://github.com/Levtos/benni-core-contracts/issues/1),
-with the first live-testable Svelte UX.
-The canonical repository and HACS source is
-`Levtos/benni-core-contracts`; the release tag is `v0.1.4`. Installation
-is a package distribution step only: it does not activate a ConfigEntry, create
-entities, alter a registry, or constitute live approval. The UX becomes
-available as a read-only Home Assistant sidebar panel after the integration is
-installed and its explicit Benni ConfigEntry is loaded.
+Fusionen kombinieren Bindings oder andere Fusionen: `first_healthy`, `latest`,
+`any_true`, `all_true` sowie die bestehenden Opening-Strategien. Fehlende Inputs,
+Zyklen, falsche Typen und Profilverletzungen werden vor Aktivierung abgewiesen.
+Contract-Schemata sind code-definiert und versioniert; mehrere Instanzen desselben
+Schemas sind konfigurierbar. Fusion ist Datenverarbeitung, keine Heiz-, Licht-,
+Media-, Wake- oder Rollo-Policy.
 
-See [the architecture](docs/architecture.md), the
-[Registry Storage v1](docs/registry-storage-v1.md), the
-[Registry Backend-Service v1](docs/registry-service-v1.md), the
-[Internal Consumer API v1](docs/consumer-api-v1.md), the
-[Gate Pack v1](docs/gate-pack-v1.md), the
-[Contract Evidence Gate v1](docs/contract-evidence-gate-v1.md), the
-[Source Binding Evidence Gate v1](docs/source-binding-evidence-gate-v1.md),
-the [Source Binding Matrix v1](docs/source-binding-matrix-v1.md), the
-[Benni Owner-/Required-Field-Gate v1](docs/benni-owner-required-field-gate-v1.md),
-the [Benni Shadow Contract Verification v1](docs/benni-shadow-contract-verification-v1.md)
-and the
-[Benni Live Evidence Acquisition v1](docs/benni-live-evidence-acquisition-v1.md)
-as well as the
-[implementation status](docs/implementation-status.md).
+## Benni und Eltern
 
-The read-only UX structure and live-install procedure are in
-[ux-implementation.md](docs/ux-implementation.md). The shared standard pointer
-is in [ux-frontend-standard.md](docs/ux-frontend-standard.md).
+**Benni und Eltern sind Konfigurationsprofile derselben Core-Contracts-Engine
+und keine getrennten Implementierungen.** Registry, Revisionen, Bindings,
+Contract-Werte, Consumer-Abos und LKG bleiben strikt profilbezogen.
 
-The Shadow-only release scope and boundaries are in
-[Benni Shadow-Only Release Candidate v1](docs/benni-shadow-only-release-v1.md).
-The separate installation procedure is in
-[installation-shadow-only.md](docs/installation-shadow-only.md). Release
-details are in [Shadow Release v1](docs/shadow-release-v1.md), and the tag
-notes are in [release-notes-shadow-0.1.4.md](docs/release-notes-shadow-0.1.4.md).
+Historische Source-Binding-Evidence ist nicht autoritativ für die produktive
+Registry. `parent_future` und `out_of_scope` in alten Evidence-Dokumenten sind
+historische Prüfgrenzen, keine aktuelle Einschränkung des Elternprofils.
 
-The first explicit Published pilot is specified in
-[published-opening-contract-v1.md](docs/published-opening-contract-v1.md).
-The current live ConfigEntry remains Shadow-only; this branch has not changed
-Home Assistant or created the pilot entity live. A later Benni-only test must
-select both verified kitchen patio-door contact sources explicitly before any
-entity-platform setup is allowed.
+## Svelte-5-Verwaltung
 
-## Profiles v1 (#21)
+Die HA-Seitenleiste enthält Übersicht, Registry mit Bindings, Fusionen,
+Contract-Instanzen, Import/Export, Historie und Einstellungen sowie Diagnose,
+Graph und Health. Echte HA-Entities sind durchsuchbar; Vorschläge benötigen
+immer eine ausdrückliche Auswahl und Rollen-/Capability-Bestätigung.
 
-`benni` and `eltern` are configuration profiles of the same Core-Contracts
-engine. They share the SignalGraph, contract schemas, fusion, quality,
-freshness, RegistryDomainService, RegistryRuntime and ConsumerApi; only their
-registry payloads, revisions, bindings, instances and resulting runtime state
-are profile-specific. The ConfigEntry is a bootstrap for either profile, while
-PostgreSQL remains the canonical registry and the profile-specific LKG remains
-the fallback.
+Es gibt **kein Autosave**:
 
-The Source Binding Evidence Gate contains only versioned, read-only evidence
-records. It does not populate the ConfigEntry or activate any binding.
-The Benni Owner-/Required-Field-Gate, Shadow Contract Verification Gate and
-Live Evidence Acquisition Gate are historical Benni evidence/pilot gates. Their
-`parent_future`/`out_of_scope` records remain useful evidence, but are not
-current profile admission and cannot activate productive bindings.
-The Shadow Contract Verification Gate evaluates explicit Benni source evidence
-only; absent current live evidence remains blocked and does not create a
-ConfigEntry activation or an entity.
-The Live Evidence Acquisition Gate documents the current read-only probe and
-keeps every source OPEN when state API authentication or ownership evidence is
-missing. The current ConfigEntry accepts either `profile=benni` or
-`profile=eltern` with an explicit `mode=shadow_only`; there is no implicit mode
-default and no public entity allowlist in the Shadow default. The separate Published
-pilot is limited to the exact kitchen-patio Opening Contract described below.
+1. Änderungen im Entwurf bearbeiten.
+2. **Prüfen** validiert ohne Persistierung/Aktivierung.
+3. **Speichern** validiert erneut, erzeugt eine Revision, führt den Graph-Probelauf
+   aus und aktiviert atomar nach erfolgreicher Prüfung.
+4. **Verwerfen** verwirft den Entwurf, niemals die aktive Registry.
+5. **Aktualisieren** liest; Dirty Values und Basisrevision bleiben erhalten.
+6. **Rollback** aktiviert eine gültige historische Revision mit OCC-Prüfung.
 
-The historical `v0.1.4` release is not a general public Contract publication.
-The current registry/runtime foundation supports both profiles internally.
-Room Climate, Weather/Environment and Technical Device results remain
-internal and diagnostic. Only the explicitly configured Benni Opening pilot
-may be published; Lock and Cover position remain evidence-only. Historical
-Source-Binding Evidence is never authoritative product configuration and is
-never promoted automatically into a productive RegistryPayload.
+Ein veralteter Entwurf erhält `revision_conflict`, niemals Last-Write-Wins.
+Schreibaktionen benötigen HA-Admin-Rechte; der Backend-Service bleibt autoritativ.
+Live-State, Freshness, Discovery und Health schreiben keine Registry-Konfiguration.
 
-## Local verification
+## Diagnose, Reparatur und Transfer
 
-The tests use only the Python standard library so they can run without a Home
-Assistant checkout:
+Die feldbezogene Diagnose zeigt Wert, Quality/Freshness/Safety, Ursache, Quellen,
+Fallback, Degradierungsdauer, Consumer Impact und Registry-Revision. **Binding
+bearbeiten** öffnet genau das betroffene Binding. Erst explizites Speichern
+aktiviert die Reparatur; ein ungültiger Repair lässt die aktive Registry intakt.
+
+Versionierter JSON-Export enthält Konfiguration, keine Runtime-Werte oder
+Zugangsdaten. Import wird zunächst validierter Entwurf. Unbekannte Felder und
+Schema-Versionen werden abgewiesen. Bulk-Auswahl und Migrationsanalyse erzeugen
+nur Vorschläge, niemals produktive Zuordnungen.
+
+## Consumer API und Public Entity Boundary
+
+Consumer deklarieren stabile IDs und benötigte Contracts/Rollen selbst. Die
+typisierte `ConsumerApi` liefert unveränderliche Snapshots, Felder, Quality,
+Freshness, Health, Revision und Lineage; Subscriptions liefern relevante
+Änderungen ohne Consumer-Polling. Missing, blocked, schema/version mismatch und
+runtime-not-ready sind unterscheidbar. Consumer erhalten keine Repository- oder
+PostgreSQL-Objekte und benötigen keine HA-Transport-Entities.
+
+Öffentliche Entities sind eine explizite Ausnahme für Dashboard, normale
+HA-Automationen oder externe Consumer. AtomicSignals, Fusion-Zwischenwerte und
+Diagnose werden nicht automatisch veröffentlicht. Der historische Published-
+Pilot bleibt auf `sensor.benni_opening_kitchen_patio_door` und seine geprüften
+Benni-Quellen begrenzt. Der interne Betriebsmodus `shadow_only` bedeutet weiterhin
+„keine Public Entities“, nicht „keine produktive Registry“.
+
+## Installation und Entwicklerdokumentation
+
+- [Bootstrap und Recovery](docs/registry-operations-v1.md)
+- [Kanonisches Lastenheft](docs/lastenheft-registry-exchange-layer-v1.md)
+- [Soll/Ist-Abnahme](docs/v1-acceptance-audit.md)
+- [Registry-Storage](docs/registry-storage-v1.md) und [Domain-Service](docs/registry-service-v1.md)
+- [Consumer API mit Testconsumer-Vorlage](docs/consumer-api-v1.md)
+- [Registry-UX](docs/registry-ux-v1.md), [Fusion-Editor](docs/fusion-editor-v1.md)
+- [Import/Export](docs/registry-import-export-v1.md), [Diagnose → Repair](docs/diagnostic-repair-v1.md)
+- [Release Notes 0.2.0](docs/release-notes-0.2.0.md)
+
+Version: **0.2.0** (Foundation v1, kein SemVer-1.0-Release). Technische Tests,
+GitHub-Release und HA-Live-Abnahme sind getrennte Gates. Installation, Reload,
+Deployment und echte HA-Verhaltensprüfung bleiben Benni vorbehalten.
+CoreState-/MediaState-/Climate-/Blind-Cutovers sind separate Aufträge.
+
+## Lokale Checks
 
 ```text
-python -m unittest discover -s tests -p "test_*.py" -v
+python -m pytest -q
+python -m unittest discover -s tests -p "test_*.py"
+python -m compileall -q custom_components tests scripts
+python scripts/validate_repository.py
+git diff --check
+cd frontend
+npm ci
+npm run check
+npm test
+npm run build
 ```
+
+Der echte PostgreSQL-Test benötigt eine ausdrücklich gesetzte
+`CORE_CONTRACTS_TEST_DSN` zu einer wegwerfbaren Testdatenbank. Ohne diese wird nur
+dieser Test übersprungen; CI stellt PostgreSQL 16 bereit. Es wird kein HA-Live-Test
+durch einen SQL-Fake oder Frontend-Test ersetzt.

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "benni-core-contracts"
-version = "0.1.4"
-description = "Benni read-only shadow foundation contracts for Home Assistant"
+version = "0.2.0"
+description = "Profile-isolated Registry and Exchange Layer for Home Assistant"
 requires-python = ">=3.12"
 dependencies = []
 

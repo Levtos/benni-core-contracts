@@ -376,6 +376,9 @@ def build_benni_owner_required_gate_v1(
     registry = registry or default_schema_registry()
     specs: list[RequiredFieldSpec] = []
     for schema in registry.all():
+        # Fixed historical pilot evidence, not an activation gate for new schemas.
+        if schema.schema_id not in {"opening", "room_climate", "technical_device", "weather_environment"}:
+            continue
         contract_ref = f"{schema.schema_id}.v{schema.version}"
         for field in schema.fields:
             if not field.required:

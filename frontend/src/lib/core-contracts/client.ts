@@ -17,7 +17,7 @@ export const CORE_CONTRACTS_COMMANDS = Object.freeze({
 } as const);
 
 export class CoreContractsClient {
-  constructor(private readonly hass: HassLike) {}
+  constructor(private readonly hass: HassLike, private readonly profile?: string) {}
 
   private async request<T>(
     type: string,
@@ -27,7 +27,7 @@ export class CoreContractsClient {
     if (!connection) {
       throw new Error("Home-Assistant-Verbindung ist noch nicht verfügbar.");
     }
-    const response = await connection.sendMessagePromise<T>({ type, ...message });
+    const response = await connection.sendMessagePromise<T>({ type, ...(this.profile ? {profile: this.profile} : {}), ...message });
     const candidate = response as T & { success?: boolean; result?: T; error?: { message?: string } };
     if (candidate && candidate.success === false) {
       throw new Error(candidate.error?.message || "Read-only Contract-Abfrage fehlgeschlagen.");

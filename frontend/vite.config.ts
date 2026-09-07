@@ -3,8 +3,11 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  resolve: { conditions: ['browser'] },
   plugins: [
+    { name: 'portable-html-newlines', transformIndexHtml: { order: 'post', handler: (html) => html.replace(/\r/g, '') } },
     svelte({
+      preprocess: { markup: ({ content }) => ({ code: content.replace(/\r\n?/g, '\n') }) },
       compilerOptions: {
         css: "injected",
       },

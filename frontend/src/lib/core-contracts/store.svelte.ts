@@ -1,5 +1,6 @@
 import { CoreContractsClient, reconcileById, reconcileContracts } from "./client";
 import { previewData } from "./fixtures";
+import { RegistryEditor, type Profile } from './registry.svelte';
 import type { ConnectionState, DataState } from "../ui/state";
 import type {
   Contract,
@@ -9,10 +10,12 @@ import type {
   HealthItem,
 } from "./types";
 
-export type AppView = "overview" | "diagnostics" | "graph" | "health";
+export type AppView = "overview" | "registry" | "diagnostics" | "graph" | "health";
 export type { ConnectionState, DataState } from "../ui/state";
 
 export class CoreContractsStore {
+  registry = new RegistryEditor();
+  constructor() { this.registry.onActivated = () => void this.refresh(); }
   activeView = $state<AppView>("overview");
   search = $state("");
   selectedContractId = $state<string | null>(null);
@@ -55,7 +58,8 @@ export class CoreContractsStore {
   setHass(hass: HassLike | null): void {
     if (hass === this.hass) return;
     this.hass = hass;
-    this.client = hass ? new CoreContractsClient(hass) : null;
+    this.registry.setHass(hass);
+    this.client = hass ? new CoreContractsClient(hass, this.registry.profile) : null;
     if (hass?.connection) {
       this.previewMode = false;
       void this.refresh();
@@ -95,6 +99,7 @@ export class CoreContractsStore {
   async refresh(): Promise<void> {
     if (!this.client || this.refreshing || this.previewMode) return;
     this.refreshing = true;
+    const profile = this.registry.profile;
     // Background polling must not make the live shell oscillate between
     // connected and reconnecting. Only the first attempt after an unavailable
     // connection needs a loading transition; successful refreshes stay quiet.
@@ -109,6 +114,7 @@ export class CoreContractsStore {
         this.client.getGraph(revision),
         this.client.getHealth(revision),
       ]);
+      if (profile !== this.registry.profile) return;
       this.contracts = reconcileContracts(this.contracts, contractsPayload.contracts ?? []);
       this.selectedDetails = Object.fromEntries(
         Object.entries(this.selectedDetails).filter(([contractId]) =>
@@ -135,11 +141,13 @@ export class CoreContractsStore {
         this.selectedContractId = this.contracts[0]?.contract_id ?? null;
       }
     } catch (error) {
+      if (profile !== this.registry.profile) return;
       this.connectionState = this.contracts.length ? "offline" : "error";
       this.dataState = this.contracts.length ? "stale" : "empty";
       this.errorMessage = error instanceof Error ? error.message : "Unbekannter read-only Verbindungsfehler.";
     } finally {
       this.refreshing = false;
+      if (profile !== this.registry.profile) void this.refresh();
     }
   }
 
@@ -169,10 +177,11 @@ export class CoreContractsStore {
     this.selectedContractId = contractId;
     this.activeView = "overview";
     if (this.client && !this.previewMode) {
+      const profile = this.registry.profile;
       void this.client
         .getContract(contractId)
         .then((payload) => {
-          if (payload.contract?.contract_id === contractId) {
+          if (profile === this.registry.profile && payload.contract?.contract_id === contractId) {
             this.selectedDetails = { ...this.selectedDetails, [contractId]: payload.contract };
           }
         })
@@ -182,6 +191,30 @@ export class CoreContractsStore {
 
   setView(view: AppView): void {
     this.activeView = view;
+    if (view === 'registry' && !this.registry.view) void this.registry.refresh();
+  }
+
+  async switchProfile(profile: Profile) {
+    await this.registry.switchProfile(profile);
+    if (this.registry.profile !== profile) return;
+    this.client = this.hass ? new CoreContractsClient(this.hass, profile) : null;
+    this.contracts = []; this.diagnostics = []; this.health = []; this.graph = null;
+    this.selectedDetails = {}; this.selectedContractId = null; this.revision = 0;
+    await this.refresh();
+  }
+
+  async repairBinding(profile: Profile, bindingId: string, revision: number) {
+    if (!this.registry.admin) return;
+    if (profile !== this.registry.profile) await this.switchProfile(profile);
+    if (profile !== this.registry.profile) return;
+    await this.registry.refresh();
+    if (this.registry.view?.registry.revision?.revision !== revision) {
+      this.registry.notice='Diagnose stammt aus einer anderen Revision. Diagnose aktualisieren und Reparatur erneut öffnen.';
+      this.activeView='registry'; return;
+    }
+    const binding=this.registry.bindings.find(b=>b.binding_id===bindingId && b.profile_id===profile);
+    if (!binding) {this.registry.notice='Binding ist im aktuellen Profil/Entwurf nicht vorhanden.'; this.activeView='registry'; return;}
+    this.registry.select(binding); this.activeView='registry';
   }
 
   setSearch(value: string): void {

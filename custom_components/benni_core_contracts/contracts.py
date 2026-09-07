@@ -276,6 +276,18 @@ TECHNICAL_DEVICE_V1 = ContractSchema(
 )
 
 
+PRESENCE_V1 = ContractSchema(
+    schema_id="presence", version=1,
+    fields=(ContractFieldSchema(
+        name="present", value_type=ValueType.BOOLEAN, required=True,
+        safety_class=SafetyClass.INFORMATIONAL,
+        fallback=_reject("presence evidence is unavailable"),
+        freshness_ttl_seconds=300,
+        freshness_requirement=FreshnessRequirement.DEVICE_OR_HA_EVENT,
+    ),),
+)
+
+
 def default_schema_registry():
     from .schema import SchemaRegistry
 
@@ -285,5 +297,6 @@ def default_schema_registry():
             OPENING_V1,
             WEATHER_ENVIRONMENT_V1,
             TECHNICAL_DEVICE_V1,
+            PRESENCE_V1,
         )
     )

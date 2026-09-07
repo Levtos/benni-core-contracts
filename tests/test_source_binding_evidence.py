@@ -76,6 +76,10 @@ class SourceBindingEvidenceTests(unittest.TestCase):
         for profile in (ProfileId.BENNI, ProfileId.ELTERN):
             records = matrix.for_profile(profile)
             for schema in default_schema_registry().all():
+                if schema.schema_id == "presence":
+                    # #19 schema has no historical evidence; never manufacture it.
+                    self.assertFalse(any(r.contract_ref == "presence.v1" for r in records))
+                    continue
                 fields = {
                     record.field
                     for record in records

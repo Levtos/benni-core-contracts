@@ -1,5 +1,10 @@
 # Benni Live Evidence Acquisition Gate v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Stand: 2026-07-30. Der ursprüngliche HTTP-Probe-Blocker ist als historischer
 Befund vom 23.07.2026 erhalten. Dieses Gate prüft ausschließlich read-only, ob für die
 bereits in der Source-Binding-Matrix v1 benannten Benni-Quellen ein aktueller,

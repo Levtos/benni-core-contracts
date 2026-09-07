@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Any, Iterable, Mapping
 
 from .quality import (
@@ -89,7 +90,8 @@ class ContractFieldSchema:
         if value is None:
             return not self.required
         if self.value_type == ValueType.NUMBER:
-            return isinstance(value, (int, float)) and not isinstance(value, bool)
+            return (isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and (not isinstance(value, float) or math.isfinite(value)))
         if self.value_type == ValueType.BOOLEAN:
             return isinstance(value, bool)
         if self.value_type == ValueType.TEXT:

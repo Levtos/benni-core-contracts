@@ -1,5 +1,10 @@
 # Gate Pack v1 – verbindliche Foundation-Regeln
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Stand: 2026-07-23. Diese Spezifikation gilt für den lokalen Shadow-Slice von
 `benni_core_contracts`. Sie definiert Datenqualität und interne Verträge; sie
 führt keine Migration durch, stellt keinen Consumer um und erzeugt keine

@@ -126,6 +126,22 @@ class SourceBinding:
         *,
         default_profile: ProfileId = ProfileId.BENNI,
     ) -> "SourceBinding":
+        allowed = {'binding_id','source_id','entity_id','field','capability','profile_id',
+                   'required','freshness_ttl_seconds','consumer_ids','fallback','read_only',
+                   'display_name','enabled'}
+        if set(data) - allowed:
+            raise ValueError('SourceBinding contains unknown fields')
+        for key in ('required','read_only','enabled'):
+            if key in data and type(data[key]) is not bool:
+                raise TypeError(f'{key} must be a boolean')
+        if 'freshness_ttl_seconds' in data and type(data['freshness_ttl_seconds']) is not int:
+            raise TypeError('freshness_ttl_seconds must be an integer')
+        for key in ('binding_id','source_id','entity_id','field','capability'):
+            if key in data and not isinstance(data[key], str):
+                raise TypeError(f'{key} must be a string')
+        if 'consumer_ids' in data and (not isinstance(data['consumer_ids'], (list, tuple))
+                or any(not isinstance(value, str) for value in data['consumer_ids'])):
+            raise TypeError('consumer_ids must be a list of strings')
         if "display_name" in data and data["display_name"] is not None:
             if not isinstance(data["display_name"], str):
                 raise TypeError("display_name must be a string when supplied")
@@ -206,9 +222,13 @@ class Fusion:
             raise ValueError("fusion_id, contract_id, and field are required")
         if not self.input_binding_ids and not self.input_fusion_ids:
             raise ValueError("Fusion needs at least one input binding or fusion")
+        for inputs in (self.input_binding_ids, self.input_fusion_ids):
+            if len(set(inputs)) != len(inputs):
+                raise ValueError("Fusion input IDs must be unique")
         if self.strategy not in {
             "first_healthy",
             "any_true",
+            "all_true",
             "latest",
             "opening_contacts",
             "opening_is_open",

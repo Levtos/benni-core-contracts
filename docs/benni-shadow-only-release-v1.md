@@ -1,5 +1,10 @@
 # Benni Shadow-Only Release v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 > Historischer Release-/Evidence-Gate (Stand 2026-07-28). Seine Benni-only-
 > Installationsgrenzen beschreiben den damaligen `0.1.4`-Kandidaten und sind
 > keine globale Sperre für den aktuellen profilisolierten Registry-/Runtime-

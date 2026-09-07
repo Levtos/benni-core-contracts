@@ -323,6 +323,8 @@ class GraphTests(unittest.TestCase):
         false_graph = make_graph()
         self._ingest_bool(false_graph, "true", False, timestamp=self.now - timedelta(seconds=1))
         self._ingest_bool(false_graph, "false", False, timestamp=self.now - timedelta(seconds=1))
+        # Every declared input must be known before OR can establish false.
+        self._ingest_bool(false_graph, "unknown", False, timestamp=self.now - timedelta(seconds=1))
         false_result = false_graph.evaluate_contract("test.any", "any_true_test", now=self.now)
         self.assertFalse(false_result.values["value"])
         self.assertEqual(false_result.field_states["value"], ValueState.VALID)

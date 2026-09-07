@@ -17,16 +17,23 @@
     <div class="diagnostic-grid">
       {#each store.diagnostics as diagnostic (diagnostic.projection_id)}
         <Panel eyebrow={labelForSchema(diagnostic.schema_id)} title={diagnostic.contract_id}>
-          <div class="diagnostic-head"><StatusBadge status={diagnostic.health} /><span class="muted">Stand {formatDateTime(diagnostic.generated_at)}</span></div>
+          <div class="diagnostic-head"><StatusBadge status={diagnostic.health} /><span class="muted">{diagnostic.profile ?? store.registry.profile} · Registry {diagnostic.registry_revision ?? 'historisch'} · Stand {formatDateTime(diagnostic.generated_at)}</span></div>
           <div class="diagnostic-fields">
             {#each diagnostic.fields as field (field.field)}
               <article class="diagnostic-field">
                 <div class="field-title"><strong>{field.field}</strong><div class="badges"><StatusBadge status={field.health} /><StatusBadge status={field.freshness} /></div></div>
                 <div class="field-facts">
+                  <span>Wert: {JSON.stringify(field.value) ?? '—'} · Quality: {field.quality} · Safety: {field.safety}</span>
+                  <span>Kandidaten: {field.bindings?.map(b=>`${b.binding_id}: ${b.entity_id}${b.enabled?'':' (deaktiviert)'}`).join(', ') || field.source_entities.join(', ') || '—'}</span>
+                  <span>Fallback: {field.fallback ?? '—'} · Degradiert seit: {formatDuration(field.degradation_duration_seconds ?? null)}</span>
                   <span><Database size={14} strokeWidth={2} aria-hidden="true" />{field.active_source_entities.join(", ") || "keine aktive Quelle"}</span>
                   <span><GitBranch size={14} strokeWidth={2} aria-hidden="true" />{field.completeness ? "vollständige Evidence" : "Evidence unvollständig"}</span>
                   <span><Users size={14} strokeWidth={2} aria-hidden="true" />{field.consumer_effect}</span>
+                  <span>Consumer Impact: {field.consumer_impact?.map(c=>`${c.consumer_id}: ${c.status}`).join(', ') || 'Keine deklarierten Consumer'}</span>
                 </div>
+                {#if store.registry.admin && diagnostic.profile && diagnostic.registry_revision !== undefined}
+                  {#each field.binding_ids ?? [] as bindingId (bindingId)}<button class="repair" onclick={()=>store.repairBinding(diagnostic.profile!,bindingId,diagnostic.registry_revision!)}>Binding bearbeiten: {bindingId}</button>{/each}
+                {/if}
                 {#if field.root_causes.length}
                   <div class="causes">
                     {#each field.root_causes as cause (cause.code)}
@@ -46,6 +53,7 @@
 </div>
 
 <style>
+  .repair { min-height:44px; padding:8px 12px; border:1px solid var(--color-border); border-radius:var(--radius-control); background:var(--color-background); color:var(--color-text-primary); cursor:pointer; text-align:left; }
   .view { display: grid; gap: var(--space-6); }
   .view-intro { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
   .view-intro p { margin: 0; max-width: 760px; color: var(--color-text-secondary); font-size: 0.84rem; line-height: 1.55; }

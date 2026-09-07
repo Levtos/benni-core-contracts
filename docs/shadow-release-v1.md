@@ -1,5 +1,10 @@
 # Benni Core Contracts — Shadow-only Release v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Stand: 2026-07-31. Release-Version: `0.1.4`.
 
 Dieses Dokument beschreibt ausschließlich die historische Release-Identität

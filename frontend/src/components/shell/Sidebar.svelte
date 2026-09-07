@@ -24,7 +24,7 @@
     <div class="brand-mark" aria-hidden="true"><Boxes size={21} strokeWidth={2.2} /></div>
     <div>
       <div class="brand-title">Core Contracts</div>
-      <div class="brand-subtitle">read-only foundation</div>
+      <div class="brand-subtitle">Registry &amp; Exchange</div>
     </div>
   </div>
 

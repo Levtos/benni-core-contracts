@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import math
 from typing import Any
 
 from .models import RawObservation
@@ -14,7 +15,10 @@ def _as_datetime(value: Any) -> datetime | None:
     if value is None or isinstance(value, datetime):
         return value
     if isinstance(value, str):
-        parsed = datetime.fromisoformat(value)
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     return None
 
@@ -26,6 +30,7 @@ def observation_from_state(
     received_at: datetime,
     state_event: bool = False,
     retained: bool | None = None,
+    value_type: str | None = None,
 ) -> RawObservation:
     """Normalize a HA State-like object without inferring a device timestamp.
 
@@ -45,6 +50,18 @@ def observation_from_state(
         origin = FreshnessOrigin.RETAINED_MQTT if retained else FreshnessOrigin.HA_TIMESTAMP
     ha_timestamp = _as_datetime(getattr(state, "last_updated", None))
     value: Any = getattr(state, "state", None)
+    if isinstance(value, str):
+        if value_type == 'boolean':
+            boolean_values = {'on':True,'off':False,'true':True,'false':False}
+            if binding.capability == 'presence':
+                boolean_values.update(home=True, not_home=False)
+            value = boolean_values.get(value.casefold(), value)
+        elif value_type == 'number':
+            try:
+                number = float(value)
+                if math.isfinite(number): value = number
+            except ValueError:
+                pass
     return RawObservation(
         source_id=binding.source_id,
         entity_id=binding.entity_id,
@@ -73,10 +90,10 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
         if not binding.enabled:
             continue
 
-        async def handle_event(event: Any, current_binding=binding) -> None:
-            new_state = event.data.get("new_state")
-            if new_state is None:
+        async def handle_event(event: Any, current_binding=binding, expected_graph=runtime.graph) -> None:
+            if runtime.graph is not expected_graph:
                 return
+            new_state = event.data.get("new_state")
             old_state = event.data.get("old_state")
             observation = observation_from_state(
                 current_binding,
@@ -84,6 +101,7 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
                 received_at=getattr(event, "time_fired", None) or utc_now(),
                 state_event=old_state is not None,
                 retained=bool(event.data.get("retained", False)),
+                value_type=runtime.graph.source_value_type(current_binding),
             )
             runtime.graph.ingest(current_binding.binding_id, observation)
             refresh = getattr(runtime, "refresh_published_contracts", None)
@@ -97,7 +115,7 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
         )
         runtime.add_unsubscribe(unsubscribe)
         current_state = hass.states.get(binding.entity_id)
-        if current_state is not None:
+        if current_state is not None and runtime.graph.signal(binding.binding_id) is None:
             runtime.graph.ingest(
                 binding.binding_id,
                 observation_from_state(
@@ -105,6 +123,7 @@ async def async_attach_source_listeners(hass: Any, runtime: ShadowRuntime) -> No
                     current_state,
                     received_at=utc_now(),
                     state_event=False,
+                    value_type=runtime.graph.source_value_type(binding),
                 ),
             )
             refresh = getattr(runtime, "refresh_published_contracts", None)

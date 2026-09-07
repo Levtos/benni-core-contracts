@@ -1,5 +1,10 @@
 # UX-/WebSocket-Anforderungen
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Die Svelte-5-/Vite-Oberfläche ist als statisch gebündeltes Home-Assistant-
 Panel umgesetzt. Sie liest ausschließlich die versionierte read-only
 WebSocket-API, damit die UX nicht aus internen Python-Details lesen muss.

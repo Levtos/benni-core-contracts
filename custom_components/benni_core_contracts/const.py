@@ -9,8 +9,8 @@ REGISTRY_SCHEMA_VERSION = 1
 REGISTRY_CACHE_SCHEMA_VERSION = 1
 GATE_PACK_VERSION = 1
 WEBSOCKET_PAYLOAD_VERSION = 1
-RELEASE_VERSION = "0.1.4"
-RELEASE_CHANNEL = "shadow_only"
+RELEASE_VERSION = "0.2.0"
+RELEASE_CHANNEL = "registry_exchange"
 
 # A missing mode is intentionally invalid; it must never silently become
 # shadow-only. ``published`` is a separately gated, explicit pilot mode.
@@ -64,7 +64,19 @@ WS_REGISTRY_BINDING_SET_ENABLED = f"{DOMAIN}/registry/binding/set_enabled"
 WS_REGISTRY_CONTRACT_INSTANCE_CREATE = f"{DOMAIN}/registry/contract_instance/create"
 WS_REGISTRY_CONTRACT_INSTANCE_UPDATE = f"{DOMAIN}/registry/contract_instance/update"
 WS_REGISTRY_CONTRACT_INSTANCE_DELETE = f"{DOMAIN}/registry/contract_instance/delete"
+WS_REGISTRY_FUSION_CREATE = f"{DOMAIN}/registry/fusion/create"
+WS_REGISTRY_FUSION_UPDATE = f"{DOMAIN}/registry/fusion/update"
+WS_REGISTRY_FUSION_DELETE = f"{DOMAIN}/registry/fusion/delete"
+WS_REGISTRY_EXPORT = f"{DOMAIN}/registry/export"
+WS_REGISTRY_IMPORT = f"{DOMAIN}/registry/import"
+WS_REGISTRY_MIGRATION_CANDIDATES = f"{DOMAIN}/registry/migration_candidates"
 WS_REGISTRY_WRITE_COMMANDS = (
+    WS_REGISTRY_EXPORT,
+    WS_REGISTRY_IMPORT,
+    WS_REGISTRY_MIGRATION_CANDIDATES,
+    WS_REGISTRY_FUSION_CREATE,
+    WS_REGISTRY_FUSION_UPDATE,
+    WS_REGISTRY_FUSION_DELETE,
     WS_REGISTRY_GET_ACTIVE,
     WS_REGISTRY_LIST_REVISIONS,
     WS_REGISTRY_DRAFT_CREATE,

@@ -873,6 +873,7 @@ class ConsumerApi:
         self._runtime = runtime
         self._now_factory = now_factory
         self._consumers: dict[str, ConsumerDeclaration] = {}
+        self._logged_requirements: dict[str, tuple] = {}
         self._overrides: dict[tuple[str, ProfileId, str, str], ConsumerOverride] = {}
         self._subscriptions: dict[str, _SubscriptionState] = {}
         self._observed: dict[tuple[ProfileId, str], _ObservedContract] = {}
@@ -946,6 +947,7 @@ class ConsumerApi:
             if value.consumer_id != consumer_id
         }
         del self._consumers[consumer_id]
+        self._logged_requirements.pop(consumer_id, None)
         return True
 
     def consumer_declaration(self, consumer_id: str) -> ConsumerDeclaration:
@@ -1322,6 +1324,11 @@ class ConsumerApi:
             )
             if self._runtime.active(profile) is not None
         )
+        status_key = tuple((state.requirement.profile.value, state.status.value) for state in states)
+        if self._logged_requirements.get(consumer_id) != status_key:
+            self._logged_requirements[consumer_id] = status_key
+            # Status codes only: no raw source values or backend details.
+            LOGGER.info('consumer requirements changed consumer=%s statuses=%s', consumer_id, status_key)
         return ConsumerImpact(consumer_id, states, revisions)
 
     consumer_impact = impact_for
@@ -1445,6 +1452,7 @@ class ConsumerApi:
         self._subscriptions.clear()
         self._observed.clear()
         self._consumers.clear()
+        self._logged_requirements.clear()
         self._overrides.clear()
 
     unload = close
@@ -1597,7 +1605,13 @@ class ConsumerApi:
     def _on_runtime_activation(self, snapshot: RegistryRuntimeSnapshot) -> None:
         if self._closed:
             return
-        self._attach_graph(snapshot)
+        if self._runtime.active(snapshot.profile) is None:
+            old_graph = self._attached_graphs.pop(snapshot.profile, None)
+            old_callback = self._graph_callbacks.pop(snapshot.profile, None)
+            if old_graph is not None and old_callback is not None:
+                old_graph.remove_change_listener(old_callback)
+        else:
+            self._attach_graph(snapshot)
         for profile, contract_id in self._watched_contracts():
             old = self._observed.get((profile, contract_id))
             with self._suppress_graph_capture():

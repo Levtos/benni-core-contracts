@@ -1,5 +1,10 @@
 # Registry Backend-Service v1
 
+Aktueller produktiver Bootstrap/Recovery und #24-Hardening stehen in
+[Registry Operations](registry-operations-v1.md). YAML konfiguriert ausschließlich
+die PostgreSQL-Verbindung und explizite Migration; der ConfigEntry bleibt Bootstrap.
+Svelte-UX/Fusion/Transfer/Repair sind implementiert und verwenden diesen Service.
+
 Issue #17 ergänzt den PostgreSQL-Unterbau aus Issue #16 um den produktiven
 Domain-Service und eine klar getrennte Home-Assistant-WebSocket-Schreibgrenze.
 Der Service besitzt keine zweite Persistenz- oder Grapharchitektur:

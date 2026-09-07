@@ -9,6 +9,7 @@ semantics.  Runtime observations never enter this module's write path.
 from __future__ import annotations
 
 import asyncio
+from functools import wraps
 import inspect
 import logging
 from copy import deepcopy
@@ -19,7 +20,7 @@ from uuid import uuid4
 
 from .contracts import default_schema_registry
 from .graph import SignalGraph
-from .models import ProfileId, SourceBinding
+from .models import Fusion, ProfileId, SourceBinding
 from .quality import utc_now
 from .registry import (
     ConcurrencyConflict,
@@ -235,10 +236,19 @@ class RegistryRuntime:
         graph = SignalGraph(
             registry=self.schema_registry,
             profile=normalized.profile,
+            binding_configuration=True,
         )
         for binding in normalized.bindings:
             graph.add_binding(binding)
         graph.add_fusions(normalized.fusions)
+        previous = self.active(normalized.profile)
+        if previous is not None:
+            graph.seed_unchanged_sources(previous.graph)
+        for instance in normalized.contract_instances:
+            # Complete dry run: lack of live evidence may block values, but a
+            # schema/evaluation exception must precede any persisted activation.
+            graph.evaluate_contract(instance['contract_id'], instance['schema_id'],
+                                    schema_version=instance.get('schema_version'))
         return normalized, graph
 
     def activate(
@@ -255,6 +265,11 @@ class RegistryRuntime:
             )
         if graph is None:
             _normalized, graph = self.prepare(revision.payload)
+        previous = self.active(revision.profile)
+        if previous is not None and previous.graph is not graph:
+            # State events may have arrived while the repository commit awaited
+            # PostgreSQL. Carry their original evidence before the atomic swap.
+            graph.seed_unchanged_sources(previous.graph)
         graph_profile = graph.profile
         if graph_profile is not None and graph_profile != revision.profile:
             raise RuntimeActivationError(
@@ -295,6 +310,13 @@ class RegistryRuntime:
     def active(self, profile: ProfileId | str) -> RegistryRuntimeSnapshot | None:
         profile_id = _profile_id(profile)
         return self._active.get(profile_id)
+
+    def deactivate(self, profile):
+        snapshot = self._active.pop(_profile_id(profile), None)
+        if snapshot is not None:
+            for listener in tuple(self._listeners):
+                try: listener(snapshot)
+                except Exception: LOGGER.warning('registry unload observer failed')
 
     def graph(self, profile: ProfileId | str) -> SignalGraph | None:
         snapshot = self.active(profile)
@@ -394,6 +416,19 @@ def _validation_issue(error: Exception) -> ValidationIssue:
     return ValidationIssue(code, message)
 
 
+def _serialized_activation(method):
+    """Do not let an earlier DB read replace a later in-process activation.
+
+    Database OCC remains authoritative across processes; this lock only orders
+    the repository-to-runtime handoff inside this service instance.
+    """
+    @wraps(method)
+    async def wrapped(self, *args, **kwargs):
+        async with self._activation_lock:
+            return await method(self, *args, **kwargs)
+    return wrapped
+
+
 class RegistryDomainService:
     """Draft and validated-write service over one PostgreSQL repository."""
 
@@ -413,6 +448,7 @@ class RegistryDomainService:
         self._draft_id_factory = draft_id_factory or (lambda: str(uuid4()))
         self._drafts: dict[str, RegistryDraft] = {}
         self._draft_lock = asyncio.Lock()
+        self._activation_lock = asyncio.Lock()
 
     async def _repository_call(self, method_name: str, *args, **kwargs) -> Any:
         method = getattr(self.repository, method_name, None)
@@ -488,9 +524,12 @@ class RegistryDomainService:
         except (KeyError, TypeError, ValueError) as err:
             raise RegistryValidationError(str(err)) from err
 
+    @_serialized_activation
     async def async_read_active(
         self,
         profile: ProfileId | str = ProfileId.BENNI,
+        *,
+        install_runtime: bool = True,
     ) -> RegistryLoadResult:
         profile_id = _profile_id(profile)
         result = await self._repository_call("load_active", profile_id)
@@ -517,10 +556,18 @@ class RegistryDomainService:
                     "revision_id": result.revision.id,
                 },
             )
-        if result.revision is not None:
+        if result.revision is not None and install_runtime:
+            current = self.runtime.active(profile_id)
+            if (current is not None and current.revision.id == result.revision.id
+                    and current.revision.checksum == result.revision.checksum):
+                if current.source != result.source:
+                    self.runtime.activate(result.revision, current.graph, source=result.source)
+                    LOGGER.warning('registry source transition profile=%s source=%s', profile_id.value, result.source.value)
+                return result
             try:
                 _normalized, graph = self._prepare_payload(result.revision.payload)
                 self.runtime.activate(result.revision, graph, source=result.source)
+                LOGGER.info('registry loaded profile=%s revision=%s source=%s', profile_id.value, result.revision.revision, result.source.value)
             except RegistryValidationError as err:
                 raise DraftValidationError(
                     "active registry cannot be installed in runtime",
@@ -648,6 +695,8 @@ class RegistryDomainService:
         self._assert_payload_profile(payload, draft.profile)
         async with self._draft_lock:
             current = self._get_draft(draft.draft_id, actor_id)
+            if current is not draft:
+                raise RegistryServiceError('draft changed during edit', code='draft_conflict')
             updated = replace(
                 current,
                 payload=payload,
@@ -728,6 +777,61 @@ class RegistryDomainService:
             valid=True,
             graph_probe_revision=graph.revision,
         )
+
+    async def async_put_fusion(self, draft_id, data, *, fusion_id=None, actor_id=None):
+        """Create/update a Fusion in the existing draft with atomic topology validation."""
+        draft = await self.async_get_draft(draft_id, actor_id=actor_id)
+        allowed = {"fusion_id", "contract_id", "field", "input_binding_ids",
+                   "input_fusion_ids", "strategy", "consumer_ids"}
+        if not isinstance(data, Mapping) or set(data) - allowed:
+            raise RegistryServiceError("unknown fusion fields", code="validation_error")
+        existing = next((f for f in draft.payload.fusions if f.fusion_id == fusion_id), None)
+        if fusion_id is not None and existing is None:
+            raise InvalidReferenceError("fusion does not exist in this draft")
+        merged = existing.as_dict() if existing else {}
+        merged.update(data)
+        try:
+            fusion = Fusion.from_dict(merged)
+            if fusion_id is not None and fusion.fusion_id != fusion_id:
+                raise InvalidReferenceError("fusion_id is stable and cannot be changed")
+            if fusion_id is None and any(f.fusion_id == fusion.fusion_id for f in draft.payload.fusions):
+                raise InvalidReferenceError("duplicate fusion ID")
+            payload = replace(draft.payload, fusions=tuple(
+                fusion if f.fusion_id == fusion_id else f for f in draft.payload.fusions
+            ) + (() if existing else (fusion,)))
+            self._prepare_payload(payload)
+        except RegistryServiceError:
+            raise
+        except (KeyError, TypeError, ValueError, RegistryValidationError) as err:
+            raise DraftValidationError("invalid fusion", issues=(_validation_issue(err),)) from err
+        return await self._replace_draft_payload(draft, payload, actor_id=actor_id)
+
+    async def async_export_registry(self, profile):
+        from .registry_transfer import export_document
+        result = await self.async_read_active(profile, install_runtime=False)
+        if result.revision is None:
+            raise RevisionNotFound("no active registry to export")
+        return export_document(result.revision.payload)
+
+    async def async_import_registry(self, profile, document, *, expected_base_revision, actor_id=None):
+        from .registry_transfer import decode_document
+        profile_id = _profile_id(profile)
+        payload = decode_document(document, profile_id.value)
+        # All schema/topology checks precede creation of the edit session.
+        self._prepare_payload(payload)
+        draft = await self.async_open_draft(profile_id, actor_id=actor_id, expected_base_revision=expected_base_revision)
+        draft = await self.async_replace_draft(draft.draft_id, payload, actor_id=actor_id)
+        report = await self.async_validate_draft(draft.draft_id, actor_id=actor_id)
+        return {"draft":draft.as_dict(), "validation":report.as_dict()}
+
+    async def async_delete_fusion(self, draft_id, fusion_id, *, actor_id=None):
+        draft = await self.async_get_draft(draft_id, actor_id=actor_id)
+        if not any(f.fusion_id == fusion_id for f in draft.payload.fusions):
+            raise InvalidReferenceError("fusion does not exist in this draft")
+        if any(fusion_id in f.input_fusion_ids for f in draft.payload.fusions):
+            raise InvalidReferenceError("fusion is referenced by another fusion")
+        payload = replace(draft.payload, fusions=tuple(f for f in draft.payload.fusions if f.fusion_id != fusion_id))
+        return await self._replace_draft_payload(draft, payload, actor_id=actor_id)
 
     async def validate_draft(
         self,
@@ -847,6 +951,8 @@ class RegistryDomainService:
                 ) from err
         if result.binding_id != current.binding_id:
             raise InvalidReferenceError("binding_id is stable and cannot be changed")
+        if result.source_id != current.source_id:
+            raise InvalidReferenceError("source_id is stable and cannot be changed")
         if result.profile_id != profile:
             raise RegistryServiceError(
                 "binding belongs to another profile",
@@ -1254,6 +1360,7 @@ class RegistryDomainService:
             actor_id=actor_id,
         )
 
+    @_serialized_activation
     async def async_save_draft(
         self,
         draft_id: str,
@@ -1415,6 +1522,7 @@ class RegistryDomainService:
     ) -> tuple[RegistryRevision, ...]:
         return await self.async_list_revisions(profile)
 
+    @_serialized_activation
     async def async_rollback(
         self,
         profile: ProfileId | str,

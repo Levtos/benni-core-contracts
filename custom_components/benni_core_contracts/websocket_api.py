@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 from typing import Any
+import logging
 
 from .const import (
     DOMAIN,
+    WS_REGISTRY_EXPORT,
+    WS_REGISTRY_IMPORT,
+    WS_REGISTRY_MIGRATION_CANDIDATES,
+    WS_REGISTRY_FUSION_CREATE,
+    WS_REGISTRY_FUSION_UPDATE,
+    WS_REGISTRY_FUSION_DELETE,
+    CONSUMER_API_KEY,
     REGISTRY_SERVICE_KEY,
     WS_COMMANDS,
     WS_GET_CONTRACT,
@@ -56,6 +64,44 @@ from .registry_service import (
 )
 from .registry_store import PostgresUnavailableError
 from .shadow import ShadowRuntime
+from .models import ProfileId
+
+WS_REGISTRY_VIEW = f"{DOMAIN}/registry/view"
+
+
+async def registry_view(service, consumer_api, profile):
+    """Read configuration without resetting the live graph or creating a draft."""
+    selected = ProfileId(profile)
+    loaded = await service.async_read_active(selected, install_runtime=False)
+    history_error = None
+    try:
+        history = await service.async_list_revisions(selected)
+    except BackendUnavailableError:
+        history = ()
+        history_error = "backend_unavailable"
+    requirements = []
+    if consumer_api is not None:
+        for impact in consumer_api.all_impacts():
+            for state in impact.requirements:
+                if state.requirement.profile == selected:
+                    requirements.append({
+                        "consumer_id": impact.consumer_id,
+                        "contract_id": state.requirement.contract_id,
+                        "role": state.requirement.role,
+                        "status": state.status.value,
+                    })
+    return {"registry": public_load_result_dict(loaded),
+            "revisions": [public_revision_dict(item) for item in history],
+            "history_error": history_error, "requirements": requirements,
+            "schemas": [schema.as_dict() for schema in service.runtime.schema_registry.all()]}
+
+
+def select_read_runtime(registry: dict, *, entry_id=None, profile=None):
+    """Explicit selectors never fall back to another household."""
+    candidates = (registry.get(entry_id),) if entry_id is not None else registry.values()
+    return next((value for value in candidates
+                 if isinstance(value, ShadowRuntime)
+                 and (profile is None or value.config.profile.value == profile)), None)
 
 
 def build_read_only_payload(
@@ -127,6 +173,7 @@ async def async_register_websocket_api(
             vol.Required("type"): command,
             vol.Optional("contract_id"): str,
             vol.Optional("entry_id"): str,
+            vol.Optional("profile"): vol.In(["benni", "eltern"]),
             vol.Optional("since_revision"): int,
         }
 
@@ -134,24 +181,41 @@ async def async_register_websocket_api(
         @websocket_api.async_response
         async def handle(hass: Any, connection: Any, msg: dict[str, Any]) -> None:
             try:
-                selected_runtime = registry.get(msg.get("entry_id"))
-                if not isinstance(selected_runtime, ShadowRuntime):
-                    selected_runtime = next(
-                        (
-                            value
-                            for key, value in registry.items()
-                            if key != WS_REGISTERED and isinstance(value, ShadowRuntime)
-                        ),
-                        None,
+                if command == WS_REGISTRY_VIEW:
+                    service = registry.get(REGISTRY_SERVICE_KEY)
+                    if service is None:
+                        raise BackendUnavailableError("registry service is unavailable")
+                    payload = await registry_view(
+                        service, registry.get(CONSUMER_API_KEY), msg.get("profile", "benni")
                     )
+                    connection.send_result(msg["id"], payload)
+                    return
+                selected_runtime = select_read_runtime(
+                    registry, entry_id=msg.get("entry_id"), profile=msg.get("profile")
+                )
                 if selected_runtime is None:
                     raise KeyError("no active core-contracts runtime")
+                service = registry.get(REGISTRY_SERVICE_KEY)
+                snapshot = service.runtime.active(selected_runtime.config.profile) if service else None
+                if snapshot is not None and snapshot.graph is not selected_runtime.graph:
+                    snapshot = None
+                if command == WS_GET_DIAGNOSTICS and snapshot is not None:
+                    for instance in snapshot.revision.payload.contract_instances:
+                        snapshot.graph.evaluate_contract(instance['contract_id'], instance['schema_id'],
+                                                         schema_version=instance.get('schema_version'))
                 payload = build_read_only_payload(
                     selected_runtime,
                     command,
                     msg.get("contract_id"),
                     since_revision=msg.get("since_revision"),
                 )
+                if command == WS_GET_DIAGNOSTICS:
+                    from .diagnostics import registry_diagnostic_context
+                    payload = registry_diagnostic_context(payload, snapshot, registry.get(CONSUMER_API_KEY))
+            except RegistryServiceError as err:
+                error = build_registry_write_error(command, err)["error"]
+                connection.send_error(msg["id"], error["code"], error["message"])
+                return
             except KeyError as err:
                 connection.send_error(msg["id"], "not_found", str(err))
                 return
@@ -168,6 +232,7 @@ async def async_register_websocket_api(
         WS_GET_DIAGNOSTICS,
         WS_GET_GRAPH,
         WS_GET_HEALTH,
+        WS_REGISTRY_VIEW,
     ):
         register(command)
     registry[WS_REGISTERED] = True
@@ -254,6 +319,7 @@ def build_registry_write_error(
 def _send_registry_error(connection: Any, request_id: int, command: str, error: Exception) -> None:
     payload = build_registry_write_error(command, error, request_id=request_id)
     error_data = payload["error"]
+    logging.getLogger(__name__).warning('registry command rejected command=%s code=%s', command, error_data['code'])
     try:
         connection.send_error(
             request_id,
@@ -298,6 +364,19 @@ async def async_dispatch_registry_write(
 
     profile = msg.get("profile", "benni")
     draft_id = msg.get("draft_id")
+    if command == WS_REGISTRY_EXPORT:
+        return await service.async_export_registry(profile)
+    if command == WS_REGISTRY_IMPORT:
+        return await service.async_import_registry(profile, msg["document"],
+            expected_base_revision=msg["expected_base_revision"], actor_id=actor_id)
+    if command in (WS_REGISTRY_FUSION_CREATE, WS_REGISTRY_FUSION_UPDATE):
+        return await service.async_put_fusion(
+            msg["draft_id"], msg["fusion"],
+            fusion_id=msg.get("fusion_id") if command == WS_REGISTRY_FUSION_UPDATE else None,
+            actor_id=actor_id,
+        )
+    if command == WS_REGISTRY_FUSION_DELETE:
+        return await service.async_delete_fusion(msg["draft_id"], msg["fusion_id"], actor_id=actor_id)
     if command == WS_REGISTRY_GET_ACTIVE:
         return await service.async_read_active(profile)
     if command == WS_REGISTRY_LIST_REVISIONS:
@@ -453,6 +532,14 @@ async def async_register_registry_write_api(
         },
     }
 
+    field_schemas.update({
+        WS_REGISTRY_EXPORT: {vol.Required("profile"): str},
+        WS_REGISTRY_IMPORT: {vol.Required("profile"): str, vol.Required("document"): dict, vol.Required("expected_base_revision"): int},
+        WS_REGISTRY_MIGRATION_CANDIDATES: {vol.Required("profile"): str},
+        WS_REGISTRY_FUSION_CREATE: {vol.Required("draft_id"): str, vol.Required("fusion"): dict},
+        WS_REGISTRY_FUSION_UPDATE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str, vol.Required("fusion"): dict},
+        WS_REGISTRY_FUSION_DELETE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str},
+    })
     for command, fields in field_schemas.items():
         schema = {
             vol.Required("id"): int,
@@ -488,6 +575,13 @@ async def async_register_registry_write_api(
                 )
                 return
             try:
+                if _command == WS_REGISTRY_MIGRATION_CANDIDATES:
+                    from .registry_transfer import migration_candidates
+                    profile = ProfileId(msg["profile"])
+                    candidates = migration_candidates(hass.config_entries.async_entries(),
+                        set(hass.states.async_entity_ids()), profile.value)
+                    connection.send_result(request_id, {"result": {"candidates": candidates}})
+                    return
                 result = await async_dispatch_registry_write(
                     selected,
                     _command,
@@ -498,6 +592,7 @@ async def async_register_registry_write_api(
                 _send_registry_error(connection, request_id, _command, err)
                 return
             connection.send_result(request_id, _registry_write_result(_command, result))
+            logging.getLogger(__name__).info('registry command completed command=%s', _command)
 
         websocket_api.async_register_command(hass, handle)
     registry[WS_WRITE_REGISTERED] = True

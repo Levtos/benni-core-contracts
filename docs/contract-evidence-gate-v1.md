@@ -159,6 +159,14 @@ des Contracts.
 Plug-Schutz, Lautstärke, Notification Routing und Apply-Entscheidungen sind
 keine technischen Device-Felder.
 
+### `presence.v1` (Registry-Erweiterung #19)
+
+`present`: boolean, required, informational, `device_or_ha_event`, TTL 300 s,
+`reject`. Frische boolesche Evidence wird mit `any_true`/`all_true` fusioniert.
+Fehlende Inputs sind unbekannt, nicht automatisch abwesend. Keine Hold-/Wake-
+oder sonstige Presence-Policy. Dieses Schema gehört nicht zur historischen
+Benni-Owner-/Source-Binding-Matrix und erzeugt dort keine fiktive Evidence.
+
 ## 4. Fixture-Katalog
 
 Alle Fixtures liegen in `tests/fixtures.py`, verwenden synthetische Entity-
