@@ -2,7 +2,7 @@
 
 ## Einmaliger Bootstrap
 
-Core Contracts 0.2.0 verwendet den bestehenden `PostgresRegistryRepository` mit
+Core Contracts verwendet den bestehenden `PostgresRegistryRepository` mit
 einem begrenzten, verzögert aufgebauten asyncpg-Pool. Es gibt keinen zweiten Store.
 Zugangsdaten gehören in HA-Secrets; sie werden nicht im ConfigEntry, Registry-
 Payload, Export, WebSocket oder Log ausgegeben.
@@ -16,9 +16,18 @@ benni_core_contracts:
 
 Der Secret-Wert ist eine `postgresql://`-URL zur dedizierten Datenbank. Ohne
 explizites `sslmode` wird `verify-full` angefügt: gültige CA und passender Hostname
-sind erforderlich. Ein abweichender TLS-Modus muss bewusst serverseitig gesetzt
-werden; unverschlüsselte Verbindungen sind keine Empfehlung für Produktion.
+sind erforderlich. Seit 0.2.1 werden schwächere oder leere explizite `sslmode`-
+Werte abgewiesen, nicht still durch einen anders konfigurierten Context ersetzt.
+Nur `verify-full` erfüllt die verbindliche CA- und Hostname-Verifikation.
 Die Datenbank sollte per Netzsegment/Firewall auf den HA-Host beschränkt sein.
+
+Der PostgreSQL-SSLContext wird beim ersten Zugriff einmalig im HA-Executor
+vorbereitet und danach wiederverwendet; Pool/Connections bleiben asynchron.
+DSN-`sslrootcert`, CRL, Client-Zertifikat/-Key/-Passwort, TLS-Versionen sowie
+asyncpgs Service-/Umgebungs-/PostgreSQL-Defaultpfade bleiben berücksichtigt.
+Es gibt keinen Wechsel auf HA-/certifi-HTTP-Trust oder HTTP-ALPN. Änderungen an
+Zertifikaten/Trust benötigen einen neuen Database-Lifecycle (HA-Neustart).
+Fehler beim Trust-Laden bleiben Fehler; es gibt keinen unverifizierten Fallback.
 
 `migrate: true` führt die bestehende idempotente Migration
 `migrations/001_registry_revision.sql` einmal beim ersten Verbindungsaufbau aus,

@@ -60,7 +60,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_VERSION, "0.2.0")
+        self.assertEqual(RELEASE_VERSION, "0.2.1")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)

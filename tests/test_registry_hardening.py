@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 import unittest
 import sys
+import ssl
 from unittest.mock import AsyncMock, Mock, patch
 
 from custom_components.benni_core_contracts.graph import SignalGraph
@@ -48,6 +49,7 @@ class BootstrapTests(unittest.IsolatedAsyncioTestCase):
             return Pool()
 
         database = RegistryDatabase('postgresql://test', migrate=True, pool_factory=factory)
+        database._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         self.assertEqual(calls, [])
         for _ in range(2):
             async with database.acquire():
@@ -62,6 +64,7 @@ class BootstrapTests(unittest.IsolatedAsyncioTestCase):
         async def unavailable(*args, **kwargs):
             raise ConnectionError('offline')
         database = RegistryDatabase('postgresql://test', pool_factory=unavailable)
+        database._ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         for _ in range(2):
             with self.assertRaises(ConnectionError):
                 async with database.acquire():
