@@ -3,6 +3,7 @@
   import type { Profile } from '../../lib/core-contracts/registry.svelte';
   import Panel from '../../lib/ui/Panel.svelte';
   import FusionEditor from './FusionEditor.svelte';
+  import RegistryTransfer from './RegistryTransfer.svelte';
   let { store }: { store: CoreContractsStore } = $props();
   let registry = $derived(store.registry);
   let fallbackError = $derived(registry.fallbackError);
@@ -15,7 +16,7 @@
     {#if registry.admin}
       <button onclick={() => registry.validate()} disabled={registry.busy || !!fallbackError}>Prüfen</button>
       <button class="primary" onclick={() => registry.save()} disabled={registry.busy || !registry.dirty || !!fallbackError}>Speichern</button>
-      <button onclick={() => registry.discard()} disabled={registry.busy || (!registry.dirty && !registry.draft)}>Änderungen verwerfen</button>
+      <button onclick={() => registry.discard()} disabled={registry.busy || (!registry.dirty && !registry.draft && !registry.importText)}>Änderungen verwerfen</button>
     {:else}<span>Read-only · Schreiben nur für Administratoren</span>{/if}
   </div>
   <div aria-live="polite">
@@ -64,6 +65,7 @@
     </Panel>
   {/if}
   <FusionEditor {registry} {store} />
+  <RegistryTransfer {registry} />
   <Panel title="Revisionshistorie" eyebrow="Profilbezogen">
     {#if registry.view?.history_error}<p class="warning">Historie derzeit nicht verfügbar. Vorhandener LKG-Stand bleibt lesbar.</p>{/if}
     {#each registry.view?.revisions ?? [] as revision (revision.id)}<article><div><strong>Revision {revision.revision}</strong><span>{revision.status} · {revision.created_at}</span></div>{#if registry.admin && ['active', 'superseded'].includes(revision.status)}<button disabled={registry.busy || registry.dirty || revision.id === registry.view?.registry.revision?.id} onclick={() => { if (window.confirm(`Revision ${revision.revision} für ${registry.profile} wiederherstellen?`)) void registry.rollback(revision.id); }}>Rollback</button>{/if}</article>{/each}

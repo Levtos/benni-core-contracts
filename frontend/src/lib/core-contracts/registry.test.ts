@@ -18,6 +18,9 @@ function fixture(admin = true) {
     const view = views[profile];
     let result: unknown;
     if (cmd === 'view') result = view;
+    else if (cmd === 'export') result = {result:{format:'core-contracts-registry',format_version:1,payload:view.registry.revision!.payload}};
+    else if (cmd === 'import') { draft={draft_id:'imported',profile,base_revision:view.registry.revision!.revision,payload:clone((msg.document as {payload:RegistryPayload}).payload)}; result={result:{draft,validation:{valid:true,errors:[]}}}; }
+    else if (cmd === 'migration_candidates') result={result:{candidates:[]}};
     else if (cmd === 'draft/create') { draft = {draft_id:'draft', profile, base_revision: view.registry.revision!.revision, payload: clone(view.registry.revision!.payload)}; result = {draft}; }
     else if (cmd === 'binding/create') { draft.payload.bindings.push(clone(msg.binding as EditableBinding)); result = {draft}; }
     else if (cmd === 'binding/update') { draft.payload.bindings = draft.payload.bindings.map(b => b.binding_id === msg.binding_id ? clone(msg.binding as EditableBinding) : b); result = {draft}; }
@@ -136,5 +139,22 @@ describe('Registry UI lifecycle', () => {
   it('does not lose dirty fusion inputs on profile switch or refresh', async()=>{
     const {editor}=fixture(); await editor.refresh(); editor.selectFusion(null); editor.fusionEditor!.contract_id='household';
     await editor.switchProfile('eltern'); await editor.refresh(); expect(editor.profile).toBe('benni'); expect(editor.fusionEditor!.contract_id).toBe('household');
+  });
+  it('exports active config and imports into a validated unsaved draft',async()=>{
+    const {editor,calls}=fixture(); await editor.refresh(); await editor.exportRegistry();
+    editor.importText=editor.exportText; await editor.importRegistry();
+    expect(editor.draft?.draft_id).toBe('imported'); expect(editor.validation?.valid).toBe(true); expect(editor.dirty).toBe(true);
+    expect(calls.some(c=>c.type==='benni_core_contracts/registry/draft/save')).toBe(false);
+  });
+  it('rejects malformed JSON and dirty import without losing input',async()=>{
+    const {editor,calls}=fixture(); await editor.refresh(); editor.importText='{'; await editor.importRegistry();
+    expect(editor.error?.code).toBe('validation_error'); expect(editor.importText).toBe('{');
+    await editor.switchProfile('eltern'); expect(editor.profile).toBe('benni');
+    enter(editor); await editor.importRegistry(); expect(editor.error?.code).toBe('dirty_draft'); expect(calls).toHaveLength(1);
+  });
+  it('bulk selection creates only candidates and requires explicit role/capability',()=>{
+    const {editor,calls}=fixture(); editor.selectedEntities=['media_player.sonos']; editor.createCandidates();
+    expect(editor.draft).toBeNull(); editor.openCandidate('media_player.sonos');
+    expect(editor.editor?.entity_id).toBe('media_player.sonos'); expect(editor.editor?.field).toBe(''); expect(editor.editor?.capability).toBe(''); expect(calls).toHaveLength(0);
   });
 });

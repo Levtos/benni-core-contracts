@@ -764,6 +764,24 @@ class RegistryDomainService:
             raise DraftValidationError("invalid fusion", issues=(_validation_issue(err),)) from err
         return await self._replace_draft_payload(draft, payload, actor_id=actor_id)
 
+    async def async_export_registry(self, profile):
+        from .registry_transfer import export_document
+        result = await self.async_read_active(profile, install_runtime=False)
+        if result.revision is None:
+            raise RevisionNotFound("no active registry to export")
+        return export_document(result.revision.payload)
+
+    async def async_import_registry(self, profile, document, *, expected_base_revision, actor_id=None):
+        from .registry_transfer import decode_document
+        profile_id = _profile_id(profile)
+        payload = decode_document(document, profile_id.value)
+        # All schema/topology checks precede creation of the edit session.
+        self._prepare_payload(payload)
+        draft = await self.async_open_draft(profile_id, actor_id=actor_id, expected_base_revision=expected_base_revision)
+        draft = await self.async_replace_draft(draft.draft_id, payload, actor_id=actor_id)
+        report = await self.async_validate_draft(draft.draft_id, actor_id=actor_id)
+        return {"draft":draft.as_dict(), "validation":report.as_dict()}
+
     async def async_delete_fusion(self, draft_id, fusion_id, *, actor_id=None):
         draft = await self.async_get_draft(draft_id, actor_id=actor_id)
         if not any(f.fusion_id == fusion_id for f in draft.payload.fusions):

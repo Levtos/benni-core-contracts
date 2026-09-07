@@ -37,7 +37,7 @@
   });
 </script>
 
-<svelte:window onbeforeunload={(event) => { if (store.registry.dirty) { event.preventDefault(); event.returnValue = ''; } }} />
+<svelte:window onbeforeunload={(event) => { if (store.registry.dirty || store.registry.importText) { event.preventDefault(); event.returnValue = ''; } }} />
 
 <AppShell
   activeView={store.activeView}

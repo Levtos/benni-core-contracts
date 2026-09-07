@@ -11,6 +11,7 @@ export interface Revision { id: string; revision: number; profile: Profile; stat
 export interface Draft { draft_id: string; profile: Profile; base_revision: number; payload: RegistryPayload }
 export interface Validation { valid: boolean; errors: { code: string; message: string; path?: string }[] }
 export interface RequirementUsage { consumer_id: string; contract_id: string | null; role: string | null; status: string }
+export interface MigrationHint {entity_id:string; shared_candidate:boolean; references:{integration:string;field:string}[]}
 export interface RegistryView {
   schemas?: {schema_id: string; version: number; fields: {name: string; value_type: string}[]}[];
   registry: { profile: Profile; revision: Revision | null; source: string; health: string; reason: string | null; used_last_known_good: boolean };
@@ -31,6 +32,11 @@ export class RegistryEditor {
   fusionEditor = $state<Fusion | null>(null);
   originalFusion = $state<Fusion | null>(null);
   fusionSchema = $state('');
+  importText = $state('');
+  exportText = $state('');
+  migrationHints = $state<MigrationHint[]>([]);
+  selectedEntities = $state<string[]>([]);
+  candidateQueue = $state<string[]>([]);
   filter = $state('');
   changed = $state(false);
   busy = $state(false);
@@ -88,10 +94,10 @@ export class RegistryEditor {
   }); }
   async switchProfile(profile: Profile) {
     if (profile === this.profile) return;
-    if (this.dirty || this.busy) { this.notice = 'Zuerst Änderungen speichern oder ausdrücklich verwerfen. Profil bleibt unverändert.'; return; }
+    if (this.dirty || this.importText || this.busy) { this.notice = 'Zuerst Änderungen speichern oder ausdrücklich verwerfen. Profil bleibt unverändert.'; return; }
     await this.run(async () => {
       if (this.draft) await this.request('draft/discard', {draft_id: this.draft.draft_id});
-      this.generation++; this.profile = profile; this.clear(); this.view = null;
+      this.generation++; this.profile = profile; this.clear(); this.view = null; this.importText=''; this.exportText=''; this.migrationHints=[]; this.selectedEntities=[]; this.candidateQueue=[];
       await this.read();
     });
   }
@@ -185,9 +191,37 @@ export class RegistryEditor {
     this.changed=true; this.validation=null;
     if (this.fusionEditor?.fusion_id===fusion.fusion_id) { this.fusionEditor=null; this.originalFusion=null; }
   }); }
+  async exportRegistry() { await this.run(async()=>{
+    const response=await this.request<{result:unknown}>('export',{profile:this.profile});
+    this.exportText=JSON.stringify(response.result,null,2);
+    this.notice='Aktive Registry exportiert. Ungespeicherte Änderungen sind nicht enthalten.';
+  }); }
+  async importRegistry() { await this.run(async()=>{
+    if (this.dirty) throw new RegistryError('dirty_draft','Vor Import vorhandene Änderungen speichern oder verwerfen.');
+    if (new TextEncoder().encode(this.importText).length>2_000_000) throw new RegistryError('validation_error','Import ist größer als 2 MB.');
+    const document:unknown=JSON.parse(this.importText);
+    if (this.draft) { await this.request('draft/discard',{draft_id:this.draft.draft_id}); this.draft=null; }
+    const response=await this.request<{result:{draft:Draft;validation:Validation}}>('import',{profile:this.profile,expected_base_revision:this.base,document});
+    this.clear(); this.draft=response.result.draft; this.validation=response.result.validation; this.changed=true;
+    this.importText='';
+    this.notice='Import geprüft und als Entwurf geladen. Erst Speichern aktiviert ihn.';
+  }); }
+  async migrationCandidates() { await this.run(async()=>{
+    const response=await this.request<{result:{candidates:MigrationHint[]}}>('migration_candidates',{profile:this.profile});
+    this.migrationHints=response.result.candidates;
+  }); }
+  createCandidates() {
+    this.candidateQueue=[...new Set(this.selectedEntities)].filter(id=>this.entities.some(e=>e.entity_id===id));
+    this.notice='Nur Kandidaten erzeugt. Für jede Entity Rolle und Capability ausdrücklich bestätigen.';
+  }
+  openCandidate(entityId:string) {
+    if (!this.candidateQueue.includes(entityId) && !this.migrationHints.some(h=>h.entity_id===entityId)) return;
+    this.select(null);
+    if (this.editor && this.original===null && this.editor.entity_id==='') this.editor.entity_id=entityId;
+  }
   async discard() { await this.run(async () => {
     if (this.draft) await this.request('draft/discard', {draft_id: this.draft.draft_id});
-    this.clear(); this.notice = 'Entwurf verworfen. Aktive Registry unverändert.'; await this.read();
+    this.clear(); this.importText=''; this.notice = 'Entwurf verworfen. Aktive Registry unverändert.'; await this.read();
   }); }
   async rollback(revisionId: string) { await this.run(async () => {
     if (this.dirty) throw new RegistryError('dirty_draft', 'Vor Rollback Änderungen speichern oder verwerfen.');

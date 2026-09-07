@@ -6,6 +6,9 @@ from typing import Any
 
 from .const import (
     DOMAIN,
+    WS_REGISTRY_EXPORT,
+    WS_REGISTRY_IMPORT,
+    WS_REGISTRY_MIGRATION_CANDIDATES,
     WS_REGISTRY_FUSION_CREATE,
     WS_REGISTRY_FUSION_UPDATE,
     WS_REGISTRY_FUSION_DELETE,
@@ -348,6 +351,11 @@ async def async_dispatch_registry_write(
 
     profile = msg.get("profile", "benni")
     draft_id = msg.get("draft_id")
+    if command == WS_REGISTRY_EXPORT:
+        return await service.async_export_registry(profile)
+    if command == WS_REGISTRY_IMPORT:
+        return await service.async_import_registry(profile, msg["document"],
+            expected_base_revision=msg["expected_base_revision"], actor_id=actor_id)
     if command in (WS_REGISTRY_FUSION_CREATE, WS_REGISTRY_FUSION_UPDATE):
         return await service.async_put_fusion(
             msg["draft_id"], msg["fusion"],
@@ -512,6 +520,9 @@ async def async_register_registry_write_api(
     }
 
     field_schemas.update({
+        WS_REGISTRY_EXPORT: {vol.Required("profile"): str},
+        WS_REGISTRY_IMPORT: {vol.Required("profile"): str, vol.Required("document"): dict, vol.Required("expected_base_revision"): int},
+        WS_REGISTRY_MIGRATION_CANDIDATES: {vol.Required("profile"): str},
         WS_REGISTRY_FUSION_CREATE: {vol.Required("draft_id"): str, vol.Required("fusion"): dict},
         WS_REGISTRY_FUSION_UPDATE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str, vol.Required("fusion"): dict},
         WS_REGISTRY_FUSION_DELETE: {vol.Required("draft_id"): str, vol.Required("fusion_id"): str},
@@ -551,6 +562,13 @@ async def async_register_registry_write_api(
                 )
                 return
             try:
+                if _command == WS_REGISTRY_MIGRATION_CANDIDATES:
+                    from .registry_transfer import migration_candidates
+                    profile = ProfileId(msg["profile"])
+                    candidates = migration_candidates(hass.config_entries.async_entries(),
+                        set(hass.states.async_entity_ids()), profile.value)
+                    connection.send_result(request_id, {"result": {"candidates": candidates}})
+                    return
                 result = await async_dispatch_registry_write(
                     selected,
                     _command,
