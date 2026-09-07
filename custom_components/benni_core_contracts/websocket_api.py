@@ -194,12 +194,23 @@ async def async_register_websocket_api(
                 )
                 if selected_runtime is None:
                     raise KeyError("no active core-contracts runtime")
+                service = registry.get(REGISTRY_SERVICE_KEY)
+                snapshot = service.runtime.active(selected_runtime.config.profile) if service else None
+                if snapshot is not None and snapshot.graph is not selected_runtime.graph:
+                    snapshot = None
+                if command == WS_GET_DIAGNOSTICS and snapshot is not None:
+                    for instance in snapshot.revision.payload.contract_instances:
+                        snapshot.graph.evaluate_contract(instance['contract_id'], instance['schema_id'],
+                                                         schema_version=instance.get('schema_version'))
                 payload = build_read_only_payload(
                     selected_runtime,
                     command,
                     msg.get("contract_id"),
                     since_revision=msg.get("since_revision"),
                 )
+                if command == WS_GET_DIAGNOSTICS:
+                    from .diagnostics import registry_diagnostic_context
+                    payload = registry_diagnostic_context(payload, snapshot, registry.get(CONSUMER_API_KEY))
             except RegistryServiceError as err:
                 error = build_registry_write_error(command, err)["error"]
                 connection.send_error(msg["id"], error["code"], error["message"])

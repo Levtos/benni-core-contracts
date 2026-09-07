@@ -24,6 +24,7 @@ const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** UI session only. Canonical persistence, validation and OCC remain in DomainService. */
 export class RegistryEditor {
+  onActivated: (()=>void) | null = null;
   profile = $state<Profile>('benni');
   view = $state<RegistryView | null>(null);
   draft = $state<Draft | null>(null);
@@ -158,7 +159,7 @@ export class RegistryEditor {
   async save() { await this.run(async () => {
     await this.applyEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
     await this.request('draft/save', {draft_id: draft.draft_id, expected_base_revision: draft.base_revision});
-    this.clear(); this.notice = 'Revision gespeichert und aktiviert.'; await this.read();
+    this.clear(); this.notice = 'Revision gespeichert und aktiviert.'; await this.read(); this.onActivated?.();
   }); }
   private clear() { this.draft = null; this.editor = null; this.original = null; this.fusionEditor = null; this.originalFusion = null; this.changed = false; this.validation = null; this.editBase = null; this.fallbackText = 'null'; this.fallbackError = ''; }
   selectFusion(fusion: Fusion | null) {
@@ -226,7 +227,7 @@ export class RegistryEditor {
   async rollback(revisionId: string) { await this.run(async () => {
     if (this.dirty) throw new RegistryError('dirty_draft', 'Vor Rollback Änderungen speichern oder verwerfen.');
     await this.request('rollback', {profile: this.profile, revision_id: revisionId, expected_base_revision: this.base});
-    this.clear(); this.notice = 'Rollback aktiviert.'; await this.read();
+    this.clear(); this.notice = 'Rollback aktiviert.'; await this.read(); this.onActivated?.();
   }); }
   consumers(binding: EditableBinding) {
     const payload = this.draft?.payload ?? this.view?.registry.revision?.payload;

@@ -57,6 +57,12 @@ export interface Contract {
 }
 
 export interface DiagnosticField {
+  value?: unknown;
+  binding_ids?: string[];
+  bindings?: {binding_id:string; entity_id:string; enabled:boolean; fallback:unknown}[];
+  consumer_impact?: {consumer_id:string;status:string}[];
+  fallback?: string;
+  degradation_duration_seconds?: number | null;
   field: string;
   state: ValueState;
   health: HealthStatus;
@@ -71,6 +77,9 @@ export interface DiagnosticField {
 }
 
 export interface DiagnosticProjection {
+  profile?: 'benni' | 'eltern';
+  registry_revision?: number;
+  registry_revision_id?: string;
   projection_id: string;
   contract_id: string;
   schema_id: string;

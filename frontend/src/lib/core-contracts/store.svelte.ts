@@ -15,6 +15,7 @@ export type { ConnectionState, DataState } from "../ui/state";
 
 export class CoreContractsStore {
   registry = new RegistryEditor();
+  constructor() { this.registry.onActivated = () => void this.refresh(); }
   activeView = $state<AppView>("overview");
   search = $state("");
   selectedContractId = $state<string | null>(null);
@@ -200,6 +201,20 @@ export class CoreContractsStore {
     this.contracts = []; this.diagnostics = []; this.health = []; this.graph = null;
     this.selectedDetails = {}; this.selectedContractId = null; this.revision = 0;
     await this.refresh();
+  }
+
+  async repairBinding(profile: Profile, bindingId: string, revision: number) {
+    if (!this.registry.admin) return;
+    if (profile !== this.registry.profile) await this.switchProfile(profile);
+    if (profile !== this.registry.profile) return;
+    await this.registry.refresh();
+    if (this.registry.view?.registry.revision?.revision !== revision) {
+      this.registry.notice='Diagnose stammt aus einer anderen Revision. Diagnose aktualisieren und Reparatur erneut öffnen.';
+      this.activeView='registry'; return;
+    }
+    const binding=this.registry.bindings.find(b=>b.binding_id===bindingId && b.profile_id===profile);
+    if (!binding) {this.registry.notice='Binding ist im aktuellen Profil/Entwurf nicht vorhanden.'; this.activeView='registry'; return;}
+    this.registry.select(binding); this.activeView='registry';
   }
 
   setSearch(value: string): void {
