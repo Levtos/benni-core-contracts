@@ -1,5 +1,10 @@
 # Source Binding Evidence Matrix v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Stand: 2026-07-30. Diese Matrix ist ein Evidence-Artefakt für
 [GitHub Issue #1](https://github.com/Levtos/benni-core-contracts/issues/1).
 Sie ist keine produktive ConfigEntry und autorisiert keine Bindung.

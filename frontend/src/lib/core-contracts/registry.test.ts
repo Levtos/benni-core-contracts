@@ -27,6 +27,8 @@ function fixture(admin = true) {
     else if (cmd === 'binding/delete') { draft.payload.bindings = draft.payload.bindings.filter(b => b.binding_id !== msg.binding_id); result = {draft}; }
     else if (cmd === 'binding/set_enabled') { draft.payload.bindings.find(b => b.binding_id === msg.binding_id)!.enabled = msg.enabled as boolean; result = {draft}; }
     else if (cmd === 'contract_instance/create') { draft.payload.contract_instances.push(clone(msg.instance as Record<string,unknown>)); result={draft}; }
+    else if (cmd === 'contract_instance/update') { draft.payload.contract_instances=draft.payload.contract_instances.map(i=>i.contract_id===msg.contract_id?clone(msg.instance as Record<string,unknown>):i); result={draft}; }
+    else if (cmd === 'contract_instance/delete') { draft.payload.contract_instances=draft.payload.contract_instances.filter(i=>i.contract_id!==msg.contract_id); result={draft}; }
     else if (cmd === 'fusion/create') { draft.payload.fusions.push(clone(msg.fusion as RegistryPayload['fusions'][number])); result={draft}; }
     else if (cmd === 'fusion/update') { draft.payload.fusions=draft.payload.fusions.map(f=>f.fusion_id===msg.fusion_id?clone(msg.fusion as RegistryPayload['fusions'][number]):f); result={draft}; }
     else if (cmd === 'fusion/delete') { draft.payload.fusions=draft.payload.fusions.filter(f=>f.fusion_id!==msg.fusion_id); result={draft}; }
@@ -45,6 +47,25 @@ function enter(editor: RegistryEditor) {
 }
 
 describe('Registry UI lifecycle', () => {
+  it('manages instances via the existing draft API without autosave or schema editing', async()=>{
+    const {editor,views,calls}=fixture(); views.benni.schemas=[{schema_id:'presence',version:1,fields:[{name:'present',value_type:'boolean'}]}];
+    await editor.refresh(); editor.selectInstance(null);
+    Object.assign(editor.instanceEditor!,{schema_id:'presence',schema_version:1,display_name:'Household'});
+    const id=editor.instanceEditor!.contract_id; expect(editor.dirty).toBe(true);
+    await editor.switchProfile('eltern'); expect(editor.profile).toBe('benni');
+    await editor.applyInstance(); expect(editor.instances).toHaveLength(1);
+    editor.instanceEditor!.display_name='Home'; await editor.validate();
+    expect(editor.instances[0]).toMatchObject({contract_id:id,display_name:'Home'});
+    expect(views.benni.registry.revision!.payload.contract_instances).toHaveLength(0);
+    await editor.removeInstance(editor.instances[0]); expect(editor.instances).toHaveLength(0);
+    expect(calls.some(c=>c.type==='benni_core_contracts/registry/draft/save')).toBe(false);
+  });
+  it('clears sensitive session buffers on a user change',()=>{
+    const {editor}=fixture(); editor.exportText='previous-user-data';editor.importText='draft';editor.selectedEntities=['sensor.private'];
+    editor.setHass({user:{id:'other',is_admin:false}});
+    expect(editor.exportText).toBe('');expect(editor.importText).toBe('');expect(editor.selectedEntities).toEqual([]);
+    expect(editor.draft).toBeNull();
+  });
   it.each(['benni', 'eltern'] as Profile[])('loads %s with explicit isolated selector', async profile => {
     const {editor,calls} = fixture(); await editor.switchProfile(profile); await editor.refresh();
     expect(editor.view?.registry.profile).toBe(profile); expect(calls.at(-1)?.profile).toBe(profile);

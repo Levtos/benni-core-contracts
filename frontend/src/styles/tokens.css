@@ -6,18 +6,18 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
-  --color-background: #14161a;
-  --color-surface: #1c1f24;
-  --color-surface-elevated: #252a32;
-  --color-border: #343b46;
-  --color-text-primary: #f2f4f7;
-  --color-text-secondary: #c5cbd4;
-  --color-text-muted: #9aa4b2;
+  --color-background: #060b10;
+  --color-surface: #121c25;
+  --color-surface-elevated: #182630;
+  --color-border: #2b4653;
+  --color-text-primary: #e7edf4;
+  --color-text-secondary: #9aa8b8;
+  --color-text-muted: #718093;
 
-  --color-info: #8aadf4;
-  --color-success: #a6e3a1;
-  --color-warning: #f9e2af;
-  --color-danger: #f38ba8;
+  --color-info: #61d8e6;
+  --color-success: #7dd7ad;
+  --color-warning: #f4d37b;
+  --color-danger: #ff8b8b;
   --color-automation: #cba6f7;
   --color-media: #f5c2e7;
   --color-action: #94e2d5;

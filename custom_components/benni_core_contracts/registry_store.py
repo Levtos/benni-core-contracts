@@ -8,6 +8,7 @@ registry configuration or runtime-derived writes.
 from __future__ import annotations
 
 import inspect
+import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -221,7 +222,12 @@ class LastKnownGoodCodec:
         data: Mapping[str, Any], profile: ProfileId | str
     ) -> RegistryRevision | None:
         profile_id = profile if isinstance(profile, ProfileId) else ProfileId(str(profile))
-        return LastKnownGoodCodec.decode_all(data).get(profile_id)
+        if not isinstance(data, Mapping) or set(data) != {'cache_version','revisions'} or not isinstance(data.get('revisions'), Mapping):
+            raise RegistryCorruptionError('invalid Last-Known-Good envelope')
+        # One corrupt household must not make the other household's LKG unreadable.
+        selected = data['revisions'].get(profile_id.value)
+        envelope = {'cache_version': data['cache_version'], 'revisions': {profile_id.value:selected} if selected is not None else {}}
+        return LastKnownGoodCodec.decode_all(envelope).get(profile_id)
 
 
 class PersistentLastKnownGoodCache:
@@ -229,6 +235,7 @@ class PersistentLastKnownGoodCache:
 
     def __init__(self, backend: LastKnownGoodBackend) -> None:
         self._backend = backend
+        self._lock = asyncio.Lock()
 
     async def async_load(self, profile: ProfileId) -> RegistryRevision | None:
         data = await self._backend.async_load()
@@ -237,10 +244,11 @@ class PersistentLastKnownGoodCache:
         return LastKnownGoodCodec.decode(data, profile)
 
     async def async_save(self, revision: RegistryRevision) -> None:
-        existing = await self._backend.async_load()
-        revisions = LastKnownGoodCodec.decode_all(existing) if existing else {}
-        revisions[revision.profile] = revision
-        await self._backend.async_save(LastKnownGoodCodec.encode(revisions.values()))
+        async with self._lock:
+            existing = await self._backend.async_load()
+            records = deepcopy(existing.get('revisions',{})) if existing else {}
+            records[revision.profile.value] = revision.as_cache_dict()
+            await self._backend.async_save({'cache_version':REGISTRY_CACHE_SCHEMA_VERSION,'revisions':records})
 
 
 class InMemoryLastKnownGoodCache:

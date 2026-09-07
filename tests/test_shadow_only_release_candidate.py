@@ -60,11 +60,11 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
 
         self.assertEqual(manifest["domain"], DOMAIN)
         self.assertEqual(manifest["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_VERSION, "0.1.4")
+        self.assertEqual(RELEASE_VERSION, "0.2.0")
         self.assertEqual(hacs["name"], manifest["name"])
         self.assertFalse(hacs["zip_release"])
         self.assertEqual(project["project"]["version"], RELEASE_VERSION)
-        self.assertEqual(RELEASE_CHANNEL, MODE_SHADOW_ONLY)
+        self.assertEqual(RELEASE_CHANNEL, "registry_exchange")
 
     def test_release_documents_and_github_workflow_are_version_consistent(self) -> None:
         release_doc = (ROOT / "docs" / "shadow-release-v1.md").read_text(encoding="utf-8")
@@ -75,7 +75,7 @@ class ShadowOnlyReleaseCandidateTests(unittest.TestCase):
             encoding="utf-8"
         )
         for document in (release_doc, release_notes):
-            self.assertIn(RELEASE_VERSION, document)
+            self.assertIn("0.1.4", document)  # Archived pilot release, not current scope.
             self.assertIn("shadow-only", document.lower())
             self.assertIn("0 HA-Entities", document)
             self.assertIn("parent_future", document)

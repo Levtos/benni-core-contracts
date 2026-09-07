@@ -4,6 +4,7 @@
   import Panel from '../../lib/ui/Panel.svelte';
   import FusionEditor from './FusionEditor.svelte';
   import RegistryTransfer from './RegistryTransfer.svelte';
+  import ContractInstances from './ContractInstances.svelte';
   let { store }: { store: CoreContractsStore } = $props();
   let registry = $derived(store.registry);
   let fallbackError = $derived(registry.fallbackError);
@@ -65,7 +66,13 @@
     </Panel>
   {/if}
   <FusionEditor {registry} {store} />
+  <ContractInstances {registry} />
   <RegistryTransfer {registry} />
+  <Panel title="Einstellungen" eyebrow="Bootstrap · read-only">
+    <p>Profil: {registry.profile} · Registry-Quelle: {registry.view?.registry.source ?? 'Nicht bereit'}.</p>
+    <p>PostgreSQL wird serverseitig konfiguriert. Zugangsdaten gehören ausschließlich in Home-Assistant-Secrets, niemals in Registry, Import oder Frontend. ConfigEntry wählt das Profil; Bindings und Fusionen werden hier im Entwurf verwaltet.</p>
+    <p>Consumer-Zuordnungen entstehen aus deklarierten Requirements. Keine manuelle Override-UX. Interne Werte werden nicht automatisch als HA-Entities veröffentlicht.</p>
+  </Panel>
   <Panel title="Revisionshistorie" eyebrow="Profilbezogen">
     {#if registry.view?.history_error}<p class="warning">Historie derzeit nicht verfügbar. Vorhandener LKG-Stand bleibt lesbar.</p>{/if}
     {#each registry.view?.revisions ?? [] as revision (revision.id)}<article><div><strong>Revision {revision.revision}</strong><span>{revision.status} · {revision.created_at}</span></div>{#if registry.admin && ['active', 'superseded'].includes(revision.status)}<button disabled={registry.busy || registry.dirty || revision.id === registry.view?.registry.revision?.id} onclick={() => { if (window.confirm(`Revision ${revision.revision} für ${registry.profile} wiederherstellen?`)) void registry.rollback(revision.id); }}>Rollback</button>{/if}</article>{/each}

@@ -85,6 +85,7 @@ class SignalGraph:
         registry: SchemaRegistry | None = None,
         now_factory=utc_now,
         profile: ProfileId | str | None = None,
+        binding_configuration: bool = False,
     ) -> None:
         if profile is not None and not isinstance(profile, ProfileId):
             try:
@@ -93,6 +94,7 @@ class SignalGraph:
                 raise ValueError("graph profile must be benni or eltern") from err
         self.registry = registry or default_schema_registry()
         self._profile = profile
+        self._binding_configuration = binding_configuration
         self._now_factory = now_factory
         self._bindings: dict[str, SourceBinding] = {}
         self._signals: dict[str, AtomicSignal] = {}
@@ -223,6 +225,11 @@ class SignalGraph:
     def binding(self, binding_id: str) -> SourceBinding:
         return self._bindings[binding_id]
 
+    def source_value_type(self, binding):
+        types = {field.value_type.value for schema in self.registry.all()
+                 for field in schema.fields if field.name == binding.field}
+        return next(iter(types)) if len(types) == 1 else None
+
     def signal(self, binding_id: str) -> AtomicSignal | None:
         return self._signals.get(binding_id)
 
@@ -252,6 +259,28 @@ class SignalGraph:
                 listener(self)
             except Exception:  # pragma: no cover - defensive integration hook
                 LOGGER.exception("signal graph change listener failed")
+
+    def seed_unchanged_sources(self, previous: "SignalGraph") -> None:
+        """Carry evidence across configuration revisions, never across profiles.
+
+        This is not restore evidence and must not refresh timestamps. A changed
+        entity/source/field starts empty; an unchanged source is reassessed with
+        the new binding's quality settings before activation.
+        """
+        if self.profile != previous.profile:
+            return
+        for binding in self.bindings():
+            old = previous._bindings.get(binding.binding_id)
+            signal = previous.signal(binding.binding_id)
+            if (not binding.enabled or old is None or signal is None
+                    or not old.enabled
+                    or (binding.source_id, binding.entity_id, binding.field)
+                    != (old.source_id, old.entity_id, old.field)):
+                continue
+            current = self.ingest(binding.binding_id, RawObservation(
+                binding.source_id, binding.entity_id, signal.value, signal.evidence))
+            self._signals[binding.binding_id] = replace(
+                current, real_change_at=signal.real_change_at)
 
     def ingest(
         self,
@@ -345,6 +374,13 @@ class SignalGraph:
 
         for field_schema in schema.fields:
             fusion = self._fusions.get((contract_id, field_schema.name))
+            if fusion is not None and self._binding_configuration and not fusion.strategy.startswith('opening_'):
+                policies = [self._bindings[key].fallback for key in fusion.input_binding_ids
+                            if self._bindings[key].fallback.action != FallbackAction.NONE]
+                if policies:
+                    if any(policy != policies[0] for policy in policies):
+                        raise GraphError('fusion binding fallbacks must agree')
+                    field_schema = replace(field_schema, fallback=policies[0])
             candidates = self._candidate_signals(fusion)
             selection = self._evaluate_fusion(fusion, field_schema, reference)
             evaluation = FieldEvaluation(
@@ -380,7 +416,7 @@ class SignalGraph:
                     required=field_schema.required,
                     safety_class=field_schema.safety_class,
                     fallback=field_schema.fallback,
-                    ttl_seconds=field_schema.freshness_ttl_seconds,
+                    ttl_seconds=min(field_schema.freshness_ttl_seconds, self._bindings[selected.binding_id].freshness_ttl_seconds),
                     freshness_requirement=field_schema.freshness_requirement,
                     now=reference,
                     last_real_change=selected.real_change_at,
@@ -571,8 +607,8 @@ class SignalGraph:
             return ValueState.INVALID
         return ValueState.UNAVAILABLE
 
-    @staticmethod
     def _select_for_fusion(
+        self,
         fusion: Fusion | None,
         candidates: tuple[AtomicSignal, ...],
         field_schema: ContractFieldSchema,
@@ -581,7 +617,7 @@ class SignalGraph:
         candidate_ids = tuple(signal.binding_id for signal in candidates)
         strategy = fusion.strategy if fusion else "none"
         if fusion is not None and strategy.startswith("opening_"):
-            return SignalGraph._select_opening_contacts(
+            return self._select_opening_contacts(
                 fusion,
                 candidates,
                 field_schema,
@@ -593,7 +629,8 @@ class SignalGraph:
             if field_schema.classify(signal.value) == ValueState.VALID
             and signal.evidence.freshness(
                 now,
-                field_schema.freshness_ttl_seconds,
+                min(field_schema.freshness_ttl_seconds, self._bindings[signal.binding_id].freshness_ttl_seconds)
+                if signal.binding_id in self._bindings else field_schema.freshness_ttl_seconds,
                 field_schema.freshness_requirement,
             )[0]
             == FreshnessStatus.FRESH
@@ -721,8 +758,8 @@ class SignalGraph:
             note="no_valid_boolean_source",
         )
 
-    @staticmethod
     def _select_opening_contacts(
+        self,
         fusion: Fusion,
         candidates: tuple[AtomicSignal, ...],
         field_schema: ContractFieldSchema,
@@ -758,7 +795,7 @@ class SignalGraph:
             if contact_value(signal) is not None
             and signal.evidence.freshness(
                 now,
-                field_schema.freshness_ttl_seconds,
+                min(field_schema.freshness_ttl_seconds, self._bindings[signal.binding_id].freshness_ttl_seconds),
                 field_schema.freshness_requirement,
             )[0]
             == FreshnessStatus.FRESH
@@ -878,8 +915,8 @@ class SignalGraph:
             completeness=True,
         )
 
-    @staticmethod
     def _source_reason(
+        self,
         selection: _FusionSelection,
         candidates: tuple[AtomicSignal, ...],
         field_schema: ContractFieldSchema,
@@ -902,7 +939,9 @@ class SignalGraph:
             or signal.evidence.origin == FreshnessOrigin.RETAINED_MQTT
             or signal.evidence.freshness(
                 now,
-                field_schema.freshness_ttl_seconds,
+                min(field_schema.freshness_ttl_seconds,
+                    self._bindings[signal.binding_id].freshness_ttl_seconds)
+                if signal.binding_id in self._bindings else field_schema.freshness_ttl_seconds,
                 field_schema.freshness_requirement,
             )[0]
             in {FreshnessStatus.SUSPECT, FreshnessStatus.STALE}

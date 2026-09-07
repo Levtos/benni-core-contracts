@@ -1,5 +1,18 @@
 # Architektur und Gate Pack v1
 
+## Aktuelle Registry & Exchange Foundation (0.2.0)
+
+PostgreSQL → RegistryDomainService → RegistryRuntime/SignalGraph → ConsumerApi
+ist der produktive profilisolierte Pfad für Benni und Eltern. HA-ConfigEntry ist
+Bootstrap; Admin-WebSocket und Svelte5 verwalten explizite Drafts/Revisionen.
+SourceListener und Freshness/Recovery lesen ausschließlich. Public Entities sind
+optional, nicht Consumer-Transport. Siehe [Soll/Ist](v1-acceptance-audit.md),
+[Operations](registry-operations-v1.md) und [Consumer API](consumer-api-v1.md).
+
+Die folgenden Gate-Pack-/Shadow-Passagen dokumentieren die historische Foundation
+und den gesonderten Published-Pilot. Benni-only/read-only-only sind keine aktuelle
+produktive Registry-Einschränkung; Safety-/Evidence-Grenzen bleiben gültig.
+
 ## Zielgrenze
 
 Der Gate-Pack-v1-Slice ist ein interner, read-only Signalgraph. Eine Quelle wird

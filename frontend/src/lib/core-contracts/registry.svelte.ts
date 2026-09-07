@@ -33,6 +33,8 @@ export class RegistryEditor {
   fusionEditor = $state<Fusion | null>(null);
   originalFusion = $state<Fusion | null>(null);
   fusionSchema = $state('');
+  instanceEditor = $state<Record<string, unknown> | null>(null);
+  originalInstance = $state<Record<string, unknown> | null>(null);
   importText = $state('');
   exportText = $state('');
   migrationHints = $state<MigrationHint[]>([]);
@@ -51,7 +53,8 @@ export class RegistryEditor {
   private generation = 0;
   get admin() { return this.hass?.user?.is_admin === true; }
   get fusionDirty() { return this.fusionEditor !== null && JSON.stringify(this.fusionEditor) !== JSON.stringify(this.originalFusion); }
-  get dirty() { return this.changed || this.fusionDirty || !!this.fallbackError || (this.editor !== null && JSON.stringify(this.editor) !== JSON.stringify(this.original)); }
+  get instanceDirty() { return this.instanceEditor !== null && JSON.stringify(this.instanceEditor) !== JSON.stringify(this.originalInstance); }
+  get dirty() { return this.changed || this.instanceDirty || this.fusionDirty || !!this.fallbackError || (this.editor !== null && JSON.stringify(this.editor) !== JSON.stringify(this.original)); }
   get fusions() { return this.draft?.payload.fusions ?? this.view?.registry.revision?.payload.fusions ?? []; }
   get instances() { return this.draft?.payload.contract_instances ?? this.view?.registry.revision?.payload.contract_instances ?? []; }
   get bindings() { return this.draft?.payload.bindings ?? this.view?.registry.revision?.payload.bindings ?? []; }
@@ -61,6 +64,7 @@ export class RegistryEditor {
   setHass(hass: HassLike | null) {
     if (this.hass?.user?.id && this.hass.user.id !== hass?.user?.id) {
       this.generation++; this.view = null; this.clear();
+      this.importText=''; this.exportText=''; this.migrationHints=[]; this.selectedEntities=[]; this.candidateQueue=[];
     }
     this.hass = hass;
   }
@@ -68,7 +72,9 @@ export class RegistryEditor {
     if (!this.hass?.connection) throw new RegistryError('backend_unavailable', 'Keine Home-Assistant-Verbindung.');
     if (command !== 'view' && !this.admin) throw new RegistryError('unauthorized', 'Nur Administratoren dürfen Registry-Entwürfe bearbeiten.');
     try {
+      const generation = this.generation;
       const response = await this.hass.connection.sendMessagePromise<T & { success?: boolean; result?: T; error?: { code: string; message: string } }>({type: `benni_core_contracts/registry/${command}`, ...args});
+      if (generation !== this.generation) throw new RegistryError('session_changed', 'Sitzung gewechselt; alte Antwort verworfen.');
       if (response.success === false) throw response.error;
       return response.success === true ? response.result as T : response;
     } catch (cause) {
@@ -153,15 +159,39 @@ export class RegistryEditor {
     this.changed = true; this.validation = null;
   }); }
   async validate() { await this.run(async () => {
-    await this.applyEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
+    await this.applyEditor(); await this.applyInstanceEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
     this.validation = (await this.request<{validation: Validation}>('draft/validate', {draft_id: draft.draft_id})).validation;
   }); }
   async save() { await this.run(async () => {
-    await this.applyEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
+    await this.applyEditor(); await this.applyInstanceEditor(); await this.applyFusionEditor(); const draft = await this.ensureDraft();
     await this.request('draft/save', {draft_id: draft.draft_id, expected_base_revision: draft.base_revision});
     this.clear(); this.notice = 'Revision gespeichert und aktiviert.'; await this.read(); this.onActivated?.();
   }); }
-  private clear() { this.draft = null; this.editor = null; this.original = null; this.fusionEditor = null; this.originalFusion = null; this.changed = false; this.validation = null; this.editBase = null; this.fallbackText = 'null'; this.fallbackError = ''; }
+  private clear() { this.draft = null; this.editor = null; this.original = null; this.fusionEditor = null; this.originalFusion = null; this.instanceEditor = null; this.originalInstance = null; this.changed = false; this.validation = null; this.editBase = null; this.fallbackText = 'null'; this.fallbackError = ''; }
+  selectInstance(instance: Record<string, unknown> | null) {
+    if (!this.admin || this.busy) return;
+    if (this.instanceDirty) { this.notice='Offene Contract-Eingabe zuerst übernehmen oder verwerfen.'; return; }
+    this.editBase ??= this.base;
+    this.originalInstance=instance ? copy(instance) : null;
+    this.instanceEditor=instance ? copy(instance) : {contract_id:`contract.${crypto.randomUUID()}`,profile:this.profile,display_name:'',schema_id:'',schema_version:1};
+  }
+  private async applyInstanceEditor() {
+    if (!this.instanceEditor || !this.instanceDirty) return;
+    const instance=copy(this.instanceEditor);
+    if (instance.profile!==this.profile || (this.originalInstance && instance.contract_id!==this.originalInstance.contract_id)) throw new RegistryError('validation_error','Contract-ID und Profil sind geschützt.');
+    if (!this.view?.schemas?.some(s=>s.schema_id===instance.schema_id && s.version===instance.schema_version)) throw new RegistryError('validation_error','Vorhandenes Contract-Schema auswählen.');
+    const draft=await this.ensureDraft();
+    this.draft=(await this.request<{draft:Draft}>(this.originalInstance?'contract_instance/update':'contract_instance/create',{draft_id:draft.draft_id,...(this.originalInstance?{contract_id:instance.contract_id}:{}),instance})).draft;
+    this.originalInstance=copy(instance); this.changed=true; this.validation=null;
+  }
+  async applyInstance() { await this.run(()=>this.applyInstanceEditor()); }
+  async removeInstance(instance: Record<string, unknown>) { await this.run(async()=>{
+    if (this.instanceDirty && this.instanceEditor?.contract_id===instance.contract_id) throw new RegistryError('dirty_editor','Offene Contract-Eingabe zuerst übernehmen.');
+    const draft=await this.ensureDraft();
+    this.draft=(await this.request<{draft:Draft}>('contract_instance/delete',{draft_id:draft.draft_id,contract_id:instance.contract_id})).draft;
+    this.changed=true; this.validation=null;
+    if (this.instanceEditor?.contract_id===instance.contract_id) { this.instanceEditor=null; this.originalInstance=null; }
+  }); }
   selectFusion(fusion: Fusion | null) {
     if (!this.admin || this.busy) return;
     if (this.fusionDirty) { this.notice='Offene Fusion zuerst in den Entwurf übernehmen oder verwerfen.'; return; }
@@ -240,6 +270,6 @@ export class RegistryEditor {
         }
       }
     }
-    return [...new Set((this.view?.requirements ?? []).filter(r => r.role === binding.field || r.role === binding.binding_id || (r.contract_id && contracts.has(r.contract_id))).map(r => r.consumer_id))];
+    return [...new Set((this.view?.requirements ?? []).filter(r => r.role === binding.field || r.role === binding.binding_id || r.role === binding.capability || r.role === binding.source_id || (r.contract_id && contracts.has(r.contract_id))).map(r => r.consumer_id))];
   }
 }

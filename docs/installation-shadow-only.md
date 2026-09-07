@@ -1,5 +1,10 @@
 # Geplante Benni-Installation: Shadow-only v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Diese Anleitung ist die historische Benni-only Installationsprozedur für den
 Release-Kandidaten `0.1.4`. Sie ist kein aktueller Ausschluss des
 profilisolierten `eltern`-Registry-/Runtime-Pfads aus Issue #21.

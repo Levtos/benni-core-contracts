@@ -493,6 +493,7 @@ def validate_registry_payload(
         graph = SignalGraph(
             registry=schema_registry or default_schema_registry(),
             profile=normalized.profile,
+            binding_configuration=True,
         )
         for binding in normalized.bindings:
             graph.add_binding(binding)
@@ -540,6 +541,9 @@ def validate_registry_payload(
                 field_schema = schema.field(fusion.field)
                 if fusion.strategy in {"any_true", "all_true"} and field_schema.value_type.value != "boolean":
                     raise ValueError("boolean fusion requires a boolean contract field")
+            for contract_id, instance in instances_by_id.items():
+                graph.evaluate_contract(contract_id, str(instance['schema_id']),
+                                        schema_version=instance.get('schema_version'))
     except (GraphError, KeyError, TypeError, ValueError) as err:
         raise RegistryValidationError(str(err)) from err
     return normalized

@@ -1,5 +1,10 @@
 # Core Contracts UX – technische Bereitstellung
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 Stand: 2026-07-28. Dieser Slice liefert eine echte, statisch gebündelte
 Svelte-5-Ansicht für die bereits vorhandene read-only WebSocket-API von
 `benni_core_contracts`. Die Ansicht ist kein Preview-Ersatz für Home

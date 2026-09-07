@@ -1,5 +1,10 @@
 # Benni Owner-/Required-Field-Gate v1
 
+> Historischer Evidence-/Pilot-Stand, nicht die aktuelle produktive Registry.
+> Aussagen zu Benni-only, parent_future, Shadow-only und ausschließlich read-only
+> UX sind durch [Registry & Exchange v1](v1-acceptance-audit.md) superseded.
+> Fachliche Safety-/Owner-Gates bleiben erhalten; Evidence aktiviert keine Bindings.
+
 > Historischer Evidence-Gate (Stand 2026-07-23). Die damalige Eltern-
 > `parent_future`-Grenze ist für diesen Gate-Scope erhalten, aber durch Issue
 > #21 als globale Registry-/Runtime-Zulassungssperre superseded.

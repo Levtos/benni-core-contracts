@@ -9,6 +9,7 @@ semantics.  Runtime observations never enter this module's write path.
 from __future__ import annotations
 
 import asyncio
+from functools import wraps
 import inspect
 import logging
 from copy import deepcopy
@@ -235,10 +236,19 @@ class RegistryRuntime:
         graph = SignalGraph(
             registry=self.schema_registry,
             profile=normalized.profile,
+            binding_configuration=True,
         )
         for binding in normalized.bindings:
             graph.add_binding(binding)
         graph.add_fusions(normalized.fusions)
+        previous = self.active(normalized.profile)
+        if previous is not None:
+            graph.seed_unchanged_sources(previous.graph)
+        for instance in normalized.contract_instances:
+            # Complete dry run: lack of live evidence may block values, but a
+            # schema/evaluation exception must precede any persisted activation.
+            graph.evaluate_contract(instance['contract_id'], instance['schema_id'],
+                                    schema_version=instance.get('schema_version'))
         return normalized, graph
 
     def activate(
@@ -255,6 +265,11 @@ class RegistryRuntime:
             )
         if graph is None:
             _normalized, graph = self.prepare(revision.payload)
+        previous = self.active(revision.profile)
+        if previous is not None and previous.graph is not graph:
+            # State events may have arrived while the repository commit awaited
+            # PostgreSQL. Carry their original evidence before the atomic swap.
+            graph.seed_unchanged_sources(previous.graph)
         graph_profile = graph.profile
         if graph_profile is not None and graph_profile != revision.profile:
             raise RuntimeActivationError(
@@ -295,6 +310,13 @@ class RegistryRuntime:
     def active(self, profile: ProfileId | str) -> RegistryRuntimeSnapshot | None:
         profile_id = _profile_id(profile)
         return self._active.get(profile_id)
+
+    def deactivate(self, profile):
+        snapshot = self._active.pop(_profile_id(profile), None)
+        if snapshot is not None:
+            for listener in tuple(self._listeners):
+                try: listener(snapshot)
+                except Exception: LOGGER.warning('registry unload observer failed')
 
     def graph(self, profile: ProfileId | str) -> SignalGraph | None:
         snapshot = self.active(profile)
@@ -394,6 +416,19 @@ def _validation_issue(error: Exception) -> ValidationIssue:
     return ValidationIssue(code, message)
 
 
+def _serialized_activation(method):
+    """Do not let an earlier DB read replace a later in-process activation.
+
+    Database OCC remains authoritative across processes; this lock only orders
+    the repository-to-runtime handoff inside this service instance.
+    """
+    @wraps(method)
+    async def wrapped(self, *args, **kwargs):
+        async with self._activation_lock:
+            return await method(self, *args, **kwargs)
+    return wrapped
+
+
 class RegistryDomainService:
     """Draft and validated-write service over one PostgreSQL repository."""
 
@@ -413,6 +448,7 @@ class RegistryDomainService:
         self._draft_id_factory = draft_id_factory or (lambda: str(uuid4()))
         self._drafts: dict[str, RegistryDraft] = {}
         self._draft_lock = asyncio.Lock()
+        self._activation_lock = asyncio.Lock()
 
     async def _repository_call(self, method_name: str, *args, **kwargs) -> Any:
         method = getattr(self.repository, method_name, None)
@@ -488,6 +524,7 @@ class RegistryDomainService:
         except (KeyError, TypeError, ValueError) as err:
             raise RegistryValidationError(str(err)) from err
 
+    @_serialized_activation
     async def async_read_active(
         self,
         profile: ProfileId | str = ProfileId.BENNI,
@@ -522,12 +559,15 @@ class RegistryDomainService:
         if result.revision is not None and install_runtime:
             current = self.runtime.active(profile_id)
             if (current is not None and current.revision.id == result.revision.id
-                    and current.revision.checksum == result.revision.checksum
-                    and current.source == result.source):
+                    and current.revision.checksum == result.revision.checksum):
+                if current.source != result.source:
+                    self.runtime.activate(result.revision, current.graph, source=result.source)
+                    LOGGER.warning('registry source transition profile=%s source=%s', profile_id.value, result.source.value)
                 return result
             try:
                 _normalized, graph = self._prepare_payload(result.revision.payload)
                 self.runtime.activate(result.revision, graph, source=result.source)
+                LOGGER.info('registry loaded profile=%s revision=%s source=%s', profile_id.value, result.revision.revision, result.source.value)
             except RegistryValidationError as err:
                 raise DraftValidationError(
                     "active registry cannot be installed in runtime",
@@ -655,6 +695,8 @@ class RegistryDomainService:
         self._assert_payload_profile(payload, draft.profile)
         async with self._draft_lock:
             current = self._get_draft(draft.draft_id, actor_id)
+            if current is not draft:
+                raise RegistryServiceError('draft changed during edit', code='draft_conflict')
             updated = replace(
                 current,
                 payload=payload,
@@ -909,6 +951,8 @@ class RegistryDomainService:
                 ) from err
         if result.binding_id != current.binding_id:
             raise InvalidReferenceError("binding_id is stable and cannot be changed")
+        if result.source_id != current.source_id:
+            raise InvalidReferenceError("source_id is stable and cannot be changed")
         if result.profile_id != profile:
             raise RegistryServiceError(
                 "binding belongs to another profile",
@@ -1316,6 +1360,7 @@ class RegistryDomainService:
             actor_id=actor_id,
         )
 
+    @_serialized_activation
     async def async_save_draft(
         self,
         draft_id: str,
@@ -1477,6 +1522,7 @@ class RegistryDomainService:
     ) -> tuple[RegistryRevision, ...]:
         return await self.async_list_revisions(profile)
 
+    @_serialized_activation
     async def async_rollback(
         self,
         profile: ProfileId | str,

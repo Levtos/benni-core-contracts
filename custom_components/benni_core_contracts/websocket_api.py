@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+import logging
 
 from .const import (
     DOMAIN,
@@ -318,6 +319,7 @@ def build_registry_write_error(
 def _send_registry_error(connection: Any, request_id: int, command: str, error: Exception) -> None:
     payload = build_registry_write_error(command, error, request_id=request_id)
     error_data = payload["error"]
+    logging.getLogger(__name__).warning('registry command rejected command=%s code=%s', command, error_data['code'])
     try:
         connection.send_error(
             request_id,
@@ -590,6 +592,7 @@ async def async_register_registry_write_api(
                 _send_registry_error(connection, request_id, _command, err)
                 return
             connection.send_result(request_id, _registry_write_result(_command, result))
+            logging.getLogger(__name__).info('registry command completed command=%s', _command)
 
         websocket_api.async_register_command(hass, handle)
     registry[WS_WRITE_REGISTERED] = True

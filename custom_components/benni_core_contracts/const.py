@@ -9,8 +9,8 @@ REGISTRY_SCHEMA_VERSION = 1
 REGISTRY_CACHE_SCHEMA_VERSION = 1
 GATE_PACK_VERSION = 1
 WEBSOCKET_PAYLOAD_VERSION = 1
-RELEASE_VERSION = "0.1.4"
-RELEASE_CHANNEL = "shadow_only"
+RELEASE_VERSION = "0.2.0"
+RELEASE_CHANNEL = "registry_exchange"
 
 # A missing mode is intentionally invalid; it must never silently become
 # shadow-only. ``published`` is a separately gated, explicit pilot mode.

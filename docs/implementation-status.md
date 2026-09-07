@@ -1,5 +1,11 @@
 # Implementierungsstatus – GitHub Issue #1
 
+> Aktueller Stand 0.2.0: #16/#17/#20/#21 bilden die gemeinsame Registry-/Exchange-
+> Foundation; #18/#19/#22/#23 ergänzen UX, Fusion, Transfer und Repair. #24 enthält
+> Hardening und vollständigen [Soll/Ist-Audit](v1-acceptance-audit.md).
+> Die nachfolgende Issue-#1-Chronik ist historisch/superseded, kein aktueller
+> Read-only-/Benni-only-Zielstand. Deployment/Live und Consumer-Cutover bleiben separat.
+
 Stand: 2026-09-05, Benni Shadow-only Release `0.1.4`,
 Published Options-Flow-Fix und Published Opening Contract v1 lokal
 implementiert; Live-Aktivierung weiterhin ausstehend.

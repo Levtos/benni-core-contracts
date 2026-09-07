@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+from datetime import timedelta
 from typing import Any
 
 from .const import (
@@ -36,6 +38,7 @@ from .consumer_api import (
 )
 from .profiles import profile_definition
 from .registry_service import RegistryDomainService, RegistryRuntime
+from .registry_service import RegistryServiceError
 from .shadow import PublishedRuntime, ShadowRuntime
 from .storage import HomeAssistantStorage, StorageCodec
 from .source_listener import async_attach_source_listeners
@@ -46,8 +49,25 @@ from .websocket_api import (
 )
 
 
+def CONFIG_SCHEMA(config):
+    """Validate bootstrap YAML without constructing a connection or echoing secrets."""
+    if DOMAIN in config:
+        from .registry_bootstrap import validate_settings
+        validate_settings(config[DOMAIN])
+    return config
+
+
 async def async_setup(hass: Any, config: dict[str, Any]) -> bool:
     registry = hass.data.setdefault(DOMAIN, {})
+    if DOMAIN in config and REGISTRY_SERVICE_KEY not in registry:
+        from .registry_bootstrap import bootstrap_repository
+        repository, database = bootstrap_repository(hass, config[DOMAIN])
+        await async_setup_registry_service(hass, repository)
+        async def stop_backend(_event):
+            api = registry.get(CONSUMER_API_KEY)
+            if api is not None: api.close()
+            await database.close()
+        hass.bus.async_listen_once('homeassistant_stop', stop_backend)
     service = registry.get(REGISTRY_SERVICE_KEY)
     if isinstance(service, RegistryDomainService):
         if not isinstance(registry.get(CONSUMER_API_KEY), ConsumerApi):
@@ -100,7 +120,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     service = registry.get(REGISTRY_SERVICE_KEY)
     if isinstance(service, RegistryDomainService) and CONSUMER_API_KEY not in registry:
         registry[CONSUMER_API_KEY] = ConsumerApi(service.runtime)
-    graph = SignalGraph.from_config(config)
+    graph = (SignalGraph(profile=config.profile) if isinstance(service, RegistryDomainService)
+             and config.mode.value != MODE_PUBLISHED else SignalGraph.from_config(config))
     if isinstance(service, RegistryDomainService):
         active_result = await service.async_read_active(config.profile)
         registry[REGISTRY_RUNTIME_KEY] = service.runtime
@@ -125,6 +146,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     registry[entry.entry_id] = runtime
     if isinstance(service, RegistryDomainService):
         async def rebind_sources() -> None:
+            if registry.get(entry.entry_id) is not runtime:
+                return
             runtime.unload()
             await async_attach_source_listeners(hass, runtime)
             refresh = getattr(runtime, "refresh_published_contracts", None)
@@ -132,7 +155,11 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
                 refresh()
 
         def on_registry_activation(snapshot: Any) -> None:
+            if registry.get(entry.entry_id) is not runtime:
+                return
             if snapshot.profile != config.profile:
+                return
+            if service.runtime.active(snapshot.profile) is None:
                 return
             runtime.graph = snapshot.graph
             create_task = getattr(hass, "async_create_task", None)
@@ -148,6 +175,32 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         registry_service=service if isinstance(service, RegistryDomainService) else None,
     )
     await async_attach_source_listeners(hass, runtime)
+    if isinstance(service, RegistryDomainService):
+        # One read-only freshness/recovery timer per loaded profile. No config writes.
+        from homeassistant.helpers.event import async_track_time_interval
+        recovery_ticks = 0
+        async def refresh_registry_runtime(_now):
+            nonlocal recovery_ticks
+            if registry.get(entry.entry_id) is not runtime:
+                return
+            recovery_ticks += 1
+            if recovery_ticks >= 12:
+                recovery_ticks = 0
+                try:
+                    await service.async_read_active(config.profile)
+                    if registry.get(entry.entry_id) is not runtime:
+                        if entry.entry_id not in registry:
+                            service.runtime.deactivate(config.profile)
+                        return
+                except RegistryServiceError:
+                    logging.getLogger(__name__).warning(
+                        'registry recovery unavailable profile=%s', config.profile.value)
+            snapshot = service.runtime.active(config.profile)
+            if snapshot is not None:
+                for instance in snapshot.revision.payload.contract_instances:
+                    snapshot.graph.evaluate_contract(instance['contract_id'], instance['schema_id'],
+                        schema_version=instance.get('schema_version'))
+        entry.async_on_unload(async_track_time_interval(hass, refresh_registry_runtime, timedelta(seconds=5)))
     if config.mode.value == MODE_PUBLISHED:
         runtime.refresh_published_contracts()
         config_entries = getattr(hass, "config_entries", None)
@@ -158,7 +211,6 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
             raise RuntimeError("Home Assistant ConfigEntry platform forwarding is unavailable")
         await config_entries.async_forward_entry_setups(entry, ["sensor"])
     await async_setup_view(hass)
-    entry.async_on_unload(lambda: async_remove_view(hass))
     if isinstance(service, RegistryDomainService):
         entry.async_on_unload(
             lambda: service.runtime.remove_listener(on_registry_activation)
@@ -176,5 +228,11 @@ async def async_unload_entry(hass: Any, entry: Any) -> bool:
             await config_entries.async_unload_platforms(entry, ["sensor"])
     if runtime is not None:
         runtime.unload()
-    async_remove_view(hass)
+    service = runtimes.get(REGISTRY_SERVICE_KEY)
+    if isinstance(service, RegistryDomainService):
+        service.runtime.deactivate(config.profile)
+    if not any(isinstance(value, ShadowRuntime) for value in runtimes.values()):
+        api = runtimes.pop(CONSUMER_API_KEY, None)
+        if api is not None: api.close()
+        async_remove_view(hass)
     return True
